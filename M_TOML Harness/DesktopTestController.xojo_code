@@ -7,8 +7,11 @@ Inherits TestController
 		  
 		  Var group As TestGroup
 		  
-		  group = New XojoUnitTests(Self, "Assertion")
-		  group = New XojoUnitFailTests(Self, "Always Fail")
+		  'group = New XojoUnitTests(Self, "Assertion")
+		  'group = New XojoUnitFailTests(Self, "Always Fail")
+		  
+		  group = new GenerateTOMLTests( self, "Generate TOML" )
+		  group = new ParseTOMLTests( self, "Parse TOML" )
 		  
 		End Sub
 	#tag EndEvent
