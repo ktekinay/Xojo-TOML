@@ -299,6 +299,35 @@ Private Class TOMLParser
 		    var value as variant = ParseValue( p, lastByteIndex, byteIndex )
 		    MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
 		    
+		    //
+		    // Create the keys as needed
+		    //
+		    var lastKey as string = keys.Pop
+		    
+		    var dict as Dictionary = CurrentDictionary
+		    for i as integer = 0 to keys.LastIndex
+		      var key as string = keys( i )
+		      
+		      var thisDict as variant = dict.Lookup( key, nil )
+		      if thisDict is nil then
+		        thisDict = ParseJSON( "{}" )
+		        dict.Value( key ) = thisDict
+		        dict = thisDict
+		        
+		      elseif thisDict isa Dictionary then
+		        dict = thisDict
+		        
+		      else
+		        RaiseException "They key '" + key + "' is not a table"
+		        
+		      end if
+		    next
+		    
+		    if dict.HasKey( lastKey ) then
+		      RaiseException "Duplicate key '" + lastKey + "' on row " + RowNumber.ToString
+		    end if
+		    
+		    dict.Value( lastKey ) = value
 		  end if
 		  
 		End Sub
