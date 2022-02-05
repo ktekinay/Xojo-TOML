@@ -1,6 +1,6 @@
 #tag Class
 Protected Class GenerateTOMLTests
-Inherits TestGroup
+Inherits TOMLTestGroupBase
 	#tag ViewBehavior
 		#tag ViewProperty
 			Name="Duration"

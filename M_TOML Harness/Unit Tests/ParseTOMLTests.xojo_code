@@ -1,6 +1,29 @@
 #tag Class
 Protected Class ParseTOMLTests
-Inherits TestGroup
+Inherits TOMLTestGroupBase
+	#tag Method, Flags = &h0
+		Sub BasicTest()
+		  var toml as string = JoinString( "key1 = 1", "key2 = ""word""" )
+		  var d as Dictionary = ParseTOML_MTC( toml )
+		  
+		  Assert.IsTrue d isa Dictionary, "Not a Dictionary"
+		  
+		  if Assert.Failed then
+		    return
+		  end if
+		  
+		  Assert.AreEqual 2, d.KeyCount, "Count"
+		  Assert.AreEqual 1, d.Lookup( "key1", 0 ).IntegerValue, "key1"
+		  Assert.AreEqual "word", d.Lookup( "key2", "" ).StringValue, "key2"
+		  
+		  if d.KeyCount <> 0 then
+		    Assert.IsFalse d.HasKey( "KEY1" ), "Case-insensitive"
+		  end if
+		  
+		End Sub
+	#tag EndMethod
+
+
 	#tag ViewBehavior
 		#tag ViewProperty
 			Name="Duration"

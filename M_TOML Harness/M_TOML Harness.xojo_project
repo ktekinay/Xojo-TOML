@@ -7,6 +7,7 @@ MenuBar=MainMenuBar;MainMenuBar.xojo_menu;&h000000002ACAC7FF;&h0000000000000000;
 Class=DesktopTestController;DesktopTestController.xojo_code;&h000000003FC78D4E;&h0000000000000000;false
 Folder=XojoUnit;XojoUnit;&h000000002516B04D;&h0000000000000000;false
 Folder=Unit Tests;Unit Tests;&h0000000073DCF7FF;&h0000000000000000;false
+Class=TOMLTestGroupBase;Unit Tests/TOMLTestGroupBase.xojo_code;&h00000000668727FF;&h0000000073DCF7FF;false
 BuildSteps=Build Automation;Build Automation.xojo_code;&h00000000507EC7FF;&h0000000000000000;false
 Folder=Shared;../Shared;&h000000007643CFFF;&h0000000000000000;false
 Folder=Tests;XojoUnit/Tests;&h0000000044C729E7;&h000000002516B04D;false

@@ -1,16 +1,9 @@
-#tag Module
-Protected Module M_TOML
-	#tag Method, Flags = &h0
-		Function GenerateTOML_MTC(dict As Dictionary) As String
-		  
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Function ParseTOML_MTC(toml As String) As Dictionary
-		  var dict as Dictionary = ParseJSON( "{}" )
-		  
-		  return dict
+#tag Class
+Protected Class TOMLTestGroupBase
+Inherits TestGroup
+	#tag Method, Flags = &h1
+		Protected Function JoinString(ParamArray strings() As String) As String
+		  return String.FromArray( strings, EndOfLine )
 		  
 		End Function
 	#tag EndMethod
@@ -58,5 +51,5 @@ Protected Module M_TOML
 			EditorType=""
 		#tag EndViewProperty
 	#tag EndViewBehavior
-End Module
-#tag EndModule
+End Class
+#tag EndClass
