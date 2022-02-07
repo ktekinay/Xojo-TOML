@@ -1,6 +1,18 @@
 #tag Class
 Private Class TOMLParser
 	#tag Method, Flags = &h21
+		Private Function GetChunk(startIndex As Integer, endIndex As Integer) As String
+		  if endIndex < startIndex then
+		    return ""
+		  end if
+		  
+		  var len as integer = endIndex - startIndex + 1
+		  return TOMLMemoryBlock.StringValue( startIndex, len, Encodings.UTF8 )
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function IndexOfByte(p As Ptr, lastByteIndex As Integer, byteIndex As Integer, targetByte As Integer) As Integer
 		  //
 		  // Get index of the target byte in the row
@@ -30,6 +42,142 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Function InterpretEscaped(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String
+		  //
+		  // Will raise an exception if it's not a valid escape character
+		  //
+		  
+		  if byteIndex > lastByteIndex then
+		    var msg as string = "Unexpected end of data"
+		    RaiseException msg
+		  end if
+		  
+		  var thisByte as integer = p.Byte( byteIndex )
+		  
+		  select case thisByte
+		  case kByteLowB
+		    byteIndex = byteIndex + 1
+		    return &u08
+		    
+		  case kByteLowF
+		    byteIndex = byteIndex + 1
+		    return &u0C
+		    
+		  case kByteLowN
+		    byteIndex = byteIndex + 1
+		    return &u0A
+		    
+		  case kByteLowR
+		    byteIndex = byteIndex + 1
+		    return &u0D
+		    
+		  case kByteLowT
+		    byteIndex = byteIndex + 1
+		    return &u09
+		    
+		  case kByteBackslash
+		    byteIndex = byteIndex + 1
+		    return "\"
+		    
+		  case kByteQuoteDouble
+		    byteIndex = byteIndex + 1
+		    return """"
+		    
+		  end select
+		  
+		  //
+		  // If we get here, but be \u or \U
+		  //
+		  
+		  var requiredBytes as integer
+		  select case thisByte
+		  case kByteLowU
+		    requiredBytes = 4
+		  case kByteCapU
+		    requiredBytes = 8
+		  case else
+		    RaiseIllegalCharacterException byteIndex
+		  end select
+		  
+		  byteIndex = byteIndex + 1
+		  
+		  if ( ( lastByteIndex - byteIndex ) + 1 ) < requiredBytes then
+		    RaiseUnexpectedEndOfDataException
+		  end if
+		  
+		  //
+		  // Let's interpret the bytes
+		  //
+		  var code as integer
+		  for i as integer = 1 to requiredBytes
+		    thisByte = p.Byte( byteIndex )
+		    select case thisByte
+		    case kByteZero to kByteNine
+		      code = ( code * 16 ) + ( thisByte - kByteZero )
+		      
+		    case kByteLowA to kByteLowF
+		      code = ( code * 16 ) + 10 + ( thisByte - kByteLowA )
+		      
+		    case kByteCapA to kByteCapF
+		      code = ( code * 16 ) + 10 + ( thisByte - kByteCapA )
+		      
+		    end select
+		    
+		    byteIndex = byteIndex + 1
+		  next
+		  
+		  return Encodings.UTF8.Chr( code )
+		  
+		  '\b         - backspace       (U+0008)
+		  '\t         - tab             (U+0009)
+		  '\n         - linefeed        (U+000A)
+		  '\f         - form feed       (U+000C)
+		  '\r         - carriage return (U+000D)
+		  '\"         - quote           (U+0022)
+		  '\\         - backslash       (U+005C)
+		  '\uXXXX     - unicode         (U+XXXX)
+		  '\UXXXXXXXX - unicode         (U+XXXXXXXX)
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function MaybeParseBoolean(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  #pragma unused lastByteIndex
+		  
+		  //
+		  // Since the MemoryBlock is padded with an EOL, 
+		  // these IF statements will short-circuit
+		  // before going out of bounds
+		  //
+		  
+		  if _
+		    p.Byte( byteIndex ) =     kByteLowT and _
+		    p.Byte( byteIndex + 1 ) = kByteLowR and _
+		    p.Byte( byteIndex + 2 ) = kByteLowU and _
+		    p.Byte( byteIndex + 3 ) = kByteLowE then
+		    value = true
+		    byteIndex = byteIndex + 4
+		    return true
+		    
+		  elseif _
+		    p.Byte( byteIndex ) =     kByteLowF and _
+		    p.Byte( byteIndex + 1 ) = kByteLowA and _
+		    p.Byte( byteIndex + 2 ) = kByteLowL and _
+		    p.Byte( byteIndex + 3 ) = kByteLowS and _
+		    p.Byte( byteIndex + 4 ) = kByteLowE then
+		    value = false
+		    byteIndex = byteIndex + 5
+		    return true
+		    
+		  end if
+		  
+		  return false
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function MaybeParseComment(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Boolean
 		  //
 		  // Should skip whitespace before calling this
@@ -39,6 +187,115 @@ Private Class TOMLParser
 		    SkipToNextRow p, lastByteIndex, byteIndex
 		    return true
 		  end if
+		  
+		  return false
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function MaybeParseNumber(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  var thisByte as integer = p.Byte( byteIndex )
+		  
+		  if thisByte = kByteZero then
+		    var nextByte as integer = p.Byte( byteIndex + 1 )
+		    select case nextByte
+		    case kByteLowB
+		      //
+		      // Binary
+		      //
+		      byteIndex = byteIndex + 2
+		      value = ParseBinary( p, lastByteIndex, byteIndex )
+		      return true
+		      
+		    case kByteLowO
+		      //
+		      // Octal
+		      //
+		      byteIndex = byteIndex + 2
+		      value = ParseOctal( p, lastByteIndex, byteIndex )
+		      return true
+		      
+		    case kByteLowX
+		      //
+		      // Hex
+		      //
+		      byteIndex = byteIndex + 2
+		      value = ParseHex( p, lastByteIndex, byteIndex )
+		      return true
+		      
+		    case kByteDot, kByteLowE, kByteCapE
+		      //
+		      // It's a float or scientific notation
+		      // let it get processed
+		      //
+		      
+		    case else //  Just a zero
+		      value = 0
+		      byteIndex = byteIndex + 1
+		      return true
+		      
+		    end select
+		  end if
+		  
+		  var testIndex as integer = byteIndex
+		  
+		  var sign as integer = 1
+		  
+		  select case p.Byte( testIndex )
+		  case kBytePlus
+		    testIndex = testIndex + 1
+		  case kByteHyphen
+		    testIndex = testIndex + 1
+		    sign = -1
+		  end select
+		  
+		  //
+		  // Look for integer
+		  //
+		  do
+		    select case p.Byte( testIndex )
+		    case kByteUnderscore
+		      testIndex = testIndex + 1
+		    case kByteZero to kByteNine
+		      testIndex = testIndex + 1
+		    case kByteDot, kByteLowE, kByteCapE
+		      //
+		      // Onto the next part
+		      //
+		      exit do
+		      
+		    case else
+		      var stringLen as integer = testIndex - byteIndex
+		      if stringLen = 0 then
+		        return false
+		      end if
+		      
+		      var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen )
+		      value = stringValue.ReplaceAll( "_", "" ).ToInteger
+		      byteIndex = testIndex
+		      return true
+		      
+		    end select
+		    
+		  loop
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function MaybeParseString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  var thisByte as integer = p.Byte( byteIndex )
+		  
+		  select case thisByte
+		  case kByteQuoteSingle
+		    value = ParseLiteralString( p, lastByteIndex, byteIndex )
+		    return true
+		    
+		  case kByteQuoteDouble
+		    value = ParseBasicString( p, lastByteIndex, byteIndex )
+		    return true
+		    
+		  end select
 		  
 		  return false
 		  
@@ -60,10 +317,7 @@ Private Class TOMLParser
 		    return
 		  end if
 		  
-		  var col as integer = byteIndex - RowStartByteIndex + 1
-		  var msg as string = "Illegal characters on row " + RowNumber.ToString + ", column " + col.ToString
-		  RaiseException msg
-		  
+		  RaiseIllegalCharacterException byteIndex
 		End Sub
 	#tag EndMethod
 
@@ -130,6 +384,145 @@ Private Class TOMLParser
 		  
 		  return dict
 		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function ParseBasicString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String
+		  var isMultiline as boolean = p.Byte( byteIndex + 1 ) = kByteQuoteDouble and p.Byte( byteIndex + 2 ) = kByteQuoteDouble
+		  
+		  if isMultiline then
+		    byteIndex = byteIndex + 3
+		    if p.Byte( byteIndex ) = kByteEOL then
+		      //
+		      // We trim this
+		      //
+		      SkipToNextRow p, lastByteIndex, byteIndex
+		    end if
+		  else
+		    byteIndex = byteIndex + 1
+		  end if
+		  
+		  var chunks() as string
+		  var chunkStartIndex as integer = byteIndex
+		  
+		  while byteIndex <= lastByteIndex
+		    var thisByte as integer = p.Byte( byteIndex )
+		    select case thisByte
+		    case kByteQuoteDouble
+		      var chunkEndIndex as integer = byteIndex - 1
+		      var isDone as boolean
+		      
+		      if not isMultiline then
+		        isDone = true
+		        byteIndex = byteIndex + 1
+		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteDouble and p.Byte( byteIndex + 2 ) = kByteQuoteDouble then
+		        isDone =  true
+		        byteIndex = byteIndex + 3
+		      end if
+		      
+		      if isDone then
+		        chunks.Add GetChunk( chunkStartIndex, chunkEndIndex )
+		        var result as string = String.FromArray( chunks, "" ).DefineEncoding( Encodings.UTF8 )
+		        return result.ReplaceLineEndings( EndOfLine )
+		      else
+		        byteIndex = byteIndex + 1
+		      end if
+		      
+		    case kByteBackslash
+		      chunks.Add GetChunk( chunkStartIndex, byteIndex - 1 )
+		      byteIndex = byteIndex + 1
+		      
+		      //
+		      // See if it's just whitespace till the end of the row
+		      //
+		      var testIndex as integer = byteIndex
+		      do
+		        var testByte as integer = p.Byte( testIndex )
+		        select case testByte
+		        case kByteSpace, kByteTab
+		          testIndex = testIndex + 1
+		          
+		        case kByteEOL
+		          //
+		          // We are trimming this
+		          //
+		          byteIndex = testIndex
+		          SkipToNextRow p, lastByteIndex, byteIndex
+		          continue while
+		          
+		        case else
+		          //
+		          // It's something else
+		          //
+		          if testIndex <> byteIndex then
+		            //
+		            // This is an error
+		            //
+		            RaiseIllegalCharacterException byteIndex
+		          end if
+		          
+		          var value as string = InterpretEscaped( p, lastByteIndex, byteIndex ) // Will raise an exception
+		          chunks.Add value
+		          
+		        end select
+		      loop
+		      
+		    case 0 to 8, 11 to 12, 14 to 31, 127
+		      RaiseIllegalCharacterException byteIndex
+		      
+		    case else
+		      byteIndex = byteIndex + 1
+		      
+		    end select
+		  wend
+		  
+		  //
+		  // If we get here, something went wrong
+		  //
+		  RaiseUnexpectedEndOfDataException
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function ParseBinary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
+		  var value as integer
+		  
+		  while byteIndex <= lastByteIndex
+		    select case p.Byte( byteIndex )
+		    case kByteOne
+		      value = value * 2 + 1
+		    case kByteZero
+		      value = value * 2
+		    case else
+		      exit while
+		    end select
+		  wend
+		  
+		  return value
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function ParseHex(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
+		  var value as integer
+		  
+		  while byteIndex <= lastByteIndex
+		    var thisByte as integer = p.Byte( byteIndex )
+		    select case thisByte
+		    case kByteZero to kByteNine
+		      value = ( value * 16 ) + ( thisByte - kByteZero )
+		    case kByteLowA to kByteLowF
+		      value = ( value * 16 ) + 10 + ( thisByte - kByteLowA )
+		    case kByteCapA to kByteCapF
+		      value = ( value * 16 ) + 10 + ( thisByte - kByteCapF )
+		    case else
+		      exit while
+		    end select
+		  wend
+		  
+		  return value
 		End Function
 	#tag EndMethod
 
@@ -218,6 +611,71 @@ Private Class TOMLParser
 		  wend
 		  
 		  return keys
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function ParseLiteralString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String
+		  var isMultiline as boolean = p.Byte( byteIndex + 1 ) = kByteQuoteSingle and p.Byte( byteIndex + 2 ) = kByteQuoteSingle
+		  
+		  if isMultiline then
+		    byteIndex = byteIndex + 3
+		    if p.Byte( byteIndex ) = kByteEOL then
+		      //
+		      // We trim this
+		      //
+		      SkipToNextRow p, lastByteIndex, byteIndex
+		    end if
+		  else
+		    byteIndex = byteIndex + 1
+		  end if
+		  
+		  var stringStartIndex as integer = byteIndex
+		  
+		  while byteIndex <= lastByteIndex
+		    var thisByte as integer = p.Byte( byteIndex )
+		    select case thisByte
+		    case kByteEOL
+		      SkipToNextRow p, lastByteIndex, byteIndex
+		      
+		    case kByteBackslash
+		      byteIndex = byteIndex + 1 // Skip the next character no matter what it is
+		      
+		    case kByteQuoteSingle
+		      var isDone as boolean
+		      var stringEndIndex as integer = byteIndex - 1
+		      
+		      if not isMultiline then
+		        isDone = true
+		        byteIndex = byteIndex + 1
+		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteSingle and p.Byte( byteIndex + 2 ) = kByteQuoteSingle then
+		        isDone = true
+		        byteIndex = byteIndex + 3
+		      end if
+		      
+		      if isDone then
+		        var result as string
+		        var stringLength as integer = stringEndIndex - stringStartIndex + 1
+		        if stringLength <> 0 then
+		          result = TOMLMemoryBlock.StringValue( stringStartIndex, stringLength, Encodings.UTF8 )
+		        end if
+		        
+		        return result.ReplaceLineEndings( EndOfLine )
+		      end if
+		      
+		    case 0 to 8, 11 to 12, 14 to 31, 127
+		      MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
+		      
+		    end select
+		    
+		    byteIndex = byteIndex + 1
+		  wend
+		  
+		  //
+		  // If we get here, something went wrong
+		  //
+		  MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteQuoteSingle
 		  
 		End Function
 	#tag EndMethod
@@ -334,20 +792,38 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Function ParseValue(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Variant
-		  var startIndex as integer = byteIndex
+		Private Function ParseOctal(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
+		  var value as integer
 		  
 		  while byteIndex <= lastByteIndex
 		    var thisByte as integer = p.Byte( byteIndex )
-		    
 		    select case thisByte
-		    case kByteEOL, kByteHash
-		      return TOMLMemoryBlock.StringValue( startIndex, byteIndex - startIndex + 1, Encodings.UTF8 )
-		      
+		    case kByteZero to kByteSeven
+		      value = ( value * 8 ) + ( thisByte - kByteZero )
+		    case else
+		      exit while
 		    end select
-		    
-		    byteIndex = byteIndex + 1
 		  wend
+		  
+		  return value
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function ParseValue(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Variant
+		  var value as variant
+		  
+		  select case true
+		  case MaybeParseNumber( p, lastByteIndex, byteIndex, value )
+		  case MaybeParseBoolean( p, lastByteIndex, byteIndex, value )
+		  case MaybeParseString( p, lastByteIndex, byteIndex, value )
+		    
+		  case else
+		    RaiseException "Illegal value on row " + RowNumber.ToString
+		  end select
+		  
+		  return value
+		  
 		End Function
 	#tag EndMethod
 
@@ -361,8 +837,25 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Sub RaiseIllegalCharacterException(byteIndex As Integer)
+		  var col as integer = byteIndex - RowStartByteIndex + 1
+		  var msg as string = "Illegal character on row " + RowNumber.ToString + ", column " + col.ToString
+		  RaiseException msg
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Sub RaiseIllegalKeyException()
 		  var msg as string = "An illegal key was found on row " + RowNumber.ToString
+		  RaiseException msg
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub RaiseUnexpectedEndOfDataException()
+		  var msg as string = "Data has ended unexpectedly on row " + RowNumber.ToString
 		  RaiseException msg
 		  
 		End Sub
@@ -423,7 +916,19 @@ Private Class TOMLParser
 	#tag EndProperty
 
 
+	#tag Constant, Name = kByteBackslash, Type = Double, Dynamic = False, Default = \"92", Scope = Private
+	#tag EndConstant
+
 	#tag Constant, Name = kByteCapA, Type = Double, Dynamic = False, Default = \"65", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteCapE, Type = Double, Dynamic = False, Default = \"69", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteCapF, Type = Double, Dynamic = False, Default = \"70", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteCapU, Type = Double, Dynamic = False, Default = \"85", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kByteCapZ, Type = Double, Dynamic = False, Default = \"90", Scope = Private
@@ -447,10 +952,58 @@ Private Class TOMLParser
 	#tag Constant, Name = kByteLowA, Type = Double, Dynamic = False, Default = \"97", Scope = Private
 	#tag EndConstant
 
+	#tag Constant, Name = kByteLowB, Type = Double, Dynamic = False, Default = \"98", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowE, Type = Double, Dynamic = False, Default = \"101", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowF, Type = Double, Dynamic = False, Default = \"102", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowL, Type = Double, Dynamic = False, Default = \"108", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowN, Type = Double, Dynamic = False, Default = \"110", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowO, Type = Double, Dynamic = False, Default = \"111", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowR, Type = Double, Dynamic = False, Default = \"114", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowS, Type = Double, Dynamic = False, Default = \"115", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowT, Type = Double, Dynamic = False, Default = \"116", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowU, Type = Double, Dynamic = False, Default = \"117", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteLowX, Type = Double, Dynamic = False, Default = \"120", Scope = Private
+	#tag EndConstant
+
 	#tag Constant, Name = kByteLowZ, Type = Double, Dynamic = False, Default = \"122", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kByteNine, Type = Double, Dynamic = False, Default = \"57", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteOne, Type = Double, Dynamic = False, Default = \"49", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kBytePlus, Type = Double, Dynamic = False, Default = \"43", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteQuoteDouble, Type = Double, Dynamic = False, Default = \"34", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteQuoteSingle, Type = Double, Dynamic = False, Default = \"39", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteSeven, Type = Double, Dynamic = False, Default = \"55", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kByteSpace, Type = Double, Dynamic = False, Default = \"32", Scope = Private

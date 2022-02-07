@@ -3,7 +3,7 @@ Protected Class ParseTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
 		Sub BasicTest()
-		  var toml as string = JoinString( "key1 = 1", "key2 = ""word""" )
+		  var toml as string = JoinString( "key1 = 1", "key2 = ""word""", "key3='word2'" )
 		  var d as Dictionary = ParseTOML_MTC( toml )
 		  
 		  Assert.IsTrue d isa Dictionary, "Not a Dictionary"
@@ -12,9 +12,10 @@ Inherits TOMLTestGroupBase
 		    return
 		  end if
 		  
-		  Assert.AreEqual 2, d.KeyCount, "Count"
+		  Assert.AreEqual 3, d.KeyCount, "Count"
 		  Assert.AreEqual 1, d.Lookup( "key1", 0 ).IntegerValue, "key1"
 		  Assert.AreEqual "word", d.Lookup( "key2", "" ).StringValue, "key2"
+		  Assert.AreEqual "word2", d.Lookup( "key3", "" ).StringValue, "key3"
 		  
 		  if d.KeyCount <> 0 then
 		    Assert.IsFalse d.HasKey( "KEY1" ), "Case-insensitive"
