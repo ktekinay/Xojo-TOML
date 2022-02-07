@@ -24,6 +24,32 @@ Inherits TOMLTestGroupBase
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Sub MultilineBasicStringTest()
+		  var toml as string 
+		  var d as Dictionary
+		  
+		  toml = JoinString( "key1 = """"""", "The quick """" \", "brown fox""""""" )
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual "The quick """" brown fox", d.Value( "key1" ).StringValue
+		  
+		  toml = JoinString( "key1 = """"""", "The quick", "brown fox""""""" )
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual "The quick" + EndOfLine + "brown fox", d.Value( "key1" ).StringValue
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub MultilineLiteralStringTest()
+		  var toml as string 
+		  var d as Dictionary
+		  
+		  toml = JoinString( "key1 = '''", "The quick '' \", "brown fox'''" )
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual "The quick '' \" + EndOfLine + "brown fox", d.Value( "key1" ).StringValue
+		End Sub
+	#tag EndMethod
+
 
 	#tag ViewBehavior
 		#tag ViewProperty
