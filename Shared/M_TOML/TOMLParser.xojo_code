@@ -449,6 +449,7 @@ Private Class TOMLParser
 		          //
 		          byteIndex = testIndex
 		          SkipToNextRow p, lastByteIndex, byteIndex
+		          chunkStartIndex = byteIndex
 		          continue while
 		          
 		        case else
@@ -467,6 +468,9 @@ Private Class TOMLParser
 		          
 		        end select
 		      loop
+		      
+		    case kByteEOL
+		      SkipToNextRow p, lastByteIndex, byteIndex
 		      
 		    case 0 to 8, 11 to 12, 14 to 31, 127
 		      RaiseIllegalCharacterException byteIndex
