@@ -25,6 +25,29 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub DoubleTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  var actual() as string = array( _
+		  "+1.2", _
+		  "-3.4", _
+		  "3.4e5", _
+		  "5.66E3", _
+		  "-0.45E-9" _
+		  )
+		  
+		  for each item as string in actual
+		    toml = "key1 = " + item
+		    d = ParseTOML_MTC( toml )
+		    Assert.AreEqual item.ToDouble, d.Value( "key1" ).DoubleValue, item
+		  next
+		  
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub MultilineBasicStringTest()
 		  var toml as string 
 		  var d as Dictionary

@@ -279,6 +279,67 @@ Private Class TOMLParser
 		    end select
 		    
 		  loop
+		  
+		  //
+		  // A dot?
+		  //
+		  if p.Byte( testIndex ) = kByteDot then
+		    var nextByte as integer = p.Byte( testIndex + 1 )
+		     
+		    if nextByte < kByteZero or thisByte > kByteNine then
+		      RaiseIllegalCharacterException testIndex
+		    end if
+		    
+		    testIndex = testIndex + 1
+		    
+		    while byteIndex <= lastByteIndex
+		      var testByte as integer = p.Byte( testIndex )
+		      select case testByte
+		      case kByteZero to kByteNine
+		        testIndex = testIndex + 1
+		      case else
+		        exit while
+		      end select
+		    wend
+		  end if
+		  
+		  //
+		  // E?
+		  //
+		  if p.Byte( testIndex ) = kByteLowE or p.Byte( testIndex ) = kByteCapE then
+		    testIndex = testIndex + 1
+		    
+		    thisByte = p.Byte( testIndex )
+		    if thisByte = kBytePlus or thisByte = kByteHyphen then
+		      testIndex = testIndex + 1
+		      thisByte = p.Byte( testIndex )
+		    end if
+		    
+		    if thisByte < kByteZero or thisByte > kByteNine then
+		      RaiseIllegalCharacterException testIndex
+		    end if
+		    
+		    while byteIndex <= lastByteIndex
+		      thisByte = p.Byte( testIndex )
+		      select case thisByte
+		      case kByteZero to kByteNine
+		        testIndex = testIndex + 1
+		      case else
+		        exit while
+		      end select
+		    wend
+		  end if
+		  
+		  //
+		  // Let's send it back
+		  //
+		  var stringLen as integer = testIndex - byteIndex
+		  var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen )
+		  byteIndex = testIndex
+		  
+		  value = stringValue.ToDouble
+		  return true
+		  
 		End Function
 	#tag EndMethod
 
