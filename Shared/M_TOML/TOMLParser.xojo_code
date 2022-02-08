@@ -142,6 +142,66 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Function MaybeParseArray(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  if p.Byte( byteIndex ) <> kByteSquareBracketOpen then
+		    return false
+		  end if
+		  
+		  var arr() as variant
+		  
+		  byteIndex = byteIndex + 1
+		  
+		  var expectComma as boolean
+		  
+		  while byteIndex <= lastByteIndex
+		    var thisByte as integer = p.Byte( byteIndex )
+		    select case thisByte
+		    case kByteComma
+		      if not expectComma then
+		        RaiseIllegalCharacterException byteIndex
+		      end if
+		      
+		      expectComma = false
+		      byteIndex = byteIndex + 1
+		      
+		    case kByteSpace, kByteTab
+		      byteIndex = byteIndex + 1
+		      
+		    case kByteEOL
+		      SkipToNextRow p, lastByteIndex, byteIndex
+		      
+		    case kByteHash
+		      call MaybeParseComment( p, lastByteIndex, byteIndex )
+		      
+		    case kByteSquareBracketClose
+		      //
+		      // We are done
+		      //
+		      byteIndex = byteIndex + 1
+		      SkipWhitespace p, lastByteIndex, byteIndex
+		      value = arr
+		      return true
+		      
+		    case else
+		      if expectComma then
+		        RaiseIllegalCharacterException byteIndex
+		      end if
+		      
+		      arr.Add ParseValue( p, lastByteIndex, byteIndex )
+		      expectComma = true
+		      
+		    end select
+		  wend
+		  
+		  //
+		  // If we get here, we ran out of data
+		  //
+		  RaiseUnexpectedEndOfDataException
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function MaybeParseBoolean(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #pragma unused lastByteIndex
 		  
@@ -184,6 +244,20 @@ Private Class TOMLParser
 		  //
 		  
 		  if p.Byte( byteIndex ) = kByteHash then
+		    //
+		    // Validate the comment characters
+		    //
+		    do
+		      byteIndex = byteIndex + 1
+		      var thisByte as integer = p.Byte( byteIndex )
+		      select case thisByte
+		      case kByteEOL
+		        exit do
+		      case 0 to 8, 11 to 31, 127
+		        RaiseIllegalCharacterException byteIndex
+		      end select
+		    loop // The last EOL will stop this loop
+		    
 		    SkipToNextRow p, lastByteIndex, byteIndex
 		    return true
 		  end if
@@ -285,7 +359,7 @@ Private Class TOMLParser
 		  //
 		  if p.Byte( testIndex ) = kByteDot then
 		    var nextByte as integer = p.Byte( testIndex + 1 )
-		     
+		    
 		    if nextByte < kByteZero or thisByte > kByteNine then
 		      RaiseIllegalCharacterException testIndex
 		    end if
@@ -526,7 +600,9 @@ Private Class TOMLParser
 		          
 		          var value as string = InterpretEscaped( p, lastByteIndex, byteIndex ) // Will raise an exception
 		          chunks.Add value
+		          chunkStartIndex = byteIndex
 		          
+		          continue while
 		        end select
 		      loop
 		      
@@ -563,6 +639,8 @@ Private Class TOMLParser
 		    case else
 		      exit while
 		    end select
+		    
+		    byteIndex = byteIndex + 1
 		  wend
 		  
 		  return value
@@ -575,16 +653,19 @@ Private Class TOMLParser
 		  
 		  while byteIndex <= lastByteIndex
 		    var thisByte as integer = p.Byte( byteIndex )
+		    
 		    select case thisByte
 		    case kByteZero to kByteNine
 		      value = ( value * 16 ) + ( thisByte - kByteZero )
 		    case kByteLowA to kByteLowF
 		      value = ( value * 16 ) + 10 + ( thisByte - kByteLowA )
 		    case kByteCapA to kByteCapF
-		      value = ( value * 16 ) + 10 + ( thisByte - kByteCapF )
+		      value = ( value * 16 ) + 10 + ( thisByte - kByteCapA )
 		    case else
 		      exit while
 		    end select
+		    
+		    byteIndex = byteIndex + 1
 		  wend
 		  
 		  return value
@@ -606,24 +687,50 @@ Private Class TOMLParser
 		    var keyLength as integer
 		    var expectingKey as boolean = true
 		    var expectingEndOfKeys as boolean
+		    var allowDot as boolean
 		    
 		    do
 		      var thisByte as integer = p.Byte( byteIndex )
 		      
+		      //
+		      // See if it's quoted
+		      //
+		      select case thisByte
+		      case kByteQuoteSingle, kByteQuoteDouble
+		        if p.Byte( byteIndex + 1 ) = thisByte then
+		          RaiseIllegalCharacterException byteIndex + 1
+		        end if
+		        
+		        if thisByte = kByteQuoteSingle then
+		          keys.Add ParseLiteralString( p, lastByteIndex, byteIndex )
+		        else
+		          keys.Add ParseBasicString( p, lastByteIndex, byteIndex )
+		        end if
+		        
+		        SkipWhitespace p, lastByteIndex, byteIndex
+		        expectingEndOfKeys = true
+		        expectingKey = false
+		        allowDot = true
+		        
+		        continue do
+		      end select
+		      
 		      select case thisByte
 		      case kByteDot
-		        if expectingKey or keyLength = 0 then
+		        if not allowDot then
 		          RaiseIllegalKeyException
 		        end if
 		        
-		        keys.Add TOMLMemoryBlock.StringValue( keyStart, keyLength, Encodings.UTF8 )
-		        
-		        keyLength = 0
+		        if keyLength <> 0 then
+		          keys.Add TOMLMemoryBlock.StringValue( keyStart, keyLength, Encodings.UTF8 )
+		          keyLength = 0
+		        end if
 		        
 		        byteIndex = byteIndex + 1
 		        
 		        expectingKey = true
 		        expectingEndOfKeys = false
+		        allowDot = false
 		        
 		        continue while
 		        
@@ -639,13 +746,7 @@ Private Class TOMLParser
 		        keyStart = byteIndex
 		        
 		        expectingEndOfKeys = true
-		        
-		      case kByteSquareBracketClose
-		        if expectingKey then
-		          RaiseIllegalKeyException
-		        end if
-		        
-		        return keys
+		        allowDot = true
 		        
 		      case kByteHyphen, kByteUnderscore, kByteCapA to kByteCapZ, kByteLowA to kByteLowZ, kByteZero to kByteNine
 		        if expectingEndOfKeys then
@@ -655,10 +756,11 @@ Private Class TOMLParser
 		        keyLength = keyLength + 1
 		        byteIndex = byteIndex + 1
 		        expectingKey = false
+		        allowDot = true
 		        
 		        continue do
 		        
-		      case kByteEquals
+		      case else
 		        if expectingKey then
 		          RaiseIllegalKeyException
 		        end if
@@ -795,7 +897,7 @@ Private Class TOMLParser
 		      SkipWhitespace p, lastByteIndex, byteIndex
 		      
 		      keys = ParseKeys( p, lastByteIndex, byteIndex )
-		      MaybeRaiseUnexpectedCharException p, byteIndex, lastByteIndex, kByteSquareBracketClose
+		      MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteSquareBracketClose
 		      byteIndex = byteIndex + 1
 		      
 		    else // Dictionary header
@@ -805,9 +907,54 @@ Private Class TOMLParser
 		      
 		    end if
 		    
-		    MaybeRaiseUnexpectedCharException p, byteIndex, lastByteIndex, kByteSquareBracketClose
+		    MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteSquareBracketClose
 		    byteIndex = byteIndex + 1
 		    MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
+		    
+		    //
+		    // Let's set the keys
+		    //
+		    CurrentDictionary = BaseDictionary
+		    
+		    var lastKey as string
+		    if isArrayHeader then
+		      lastKey = keys.Pop
+		    end if
+		    
+		    for each key as string in keys
+		      var keyDict as Dictionary
+		      if not CurrentDictionary.HasKey( key ) then
+		        keyDict = ParseJSON( "{}" )
+		        CurrentDictionary.Value( key ) = keyDict
+		        
+		      else
+		        var value as variant = CurrentDictionary.Value( key )
+		        if value isa Dictionary then
+		          keyDict = value
+		        else
+		          RaiseDuplicateKeyException key
+		        end if
+		        
+		      end if
+		      CurrentDictionary = keyDict
+		    next
+		    
+		    if isArrayHeader then
+		      var arr() as variant
+		      if CurrentDictionary.HasKey( lastKey ) then
+		        var value as variant = CurrentDictionary.Value( lastKey )
+		        if not value.IsArray then
+		          RaiseDuplicateKeyException lastKey
+		        end if
+		        arr = value
+		      else
+		        CurrentDictionary.Value( lastKey ) = arr
+		      end if
+		      
+		      var newDict as Dictionary = ParseJSON( "{}" )
+		      arr.Add newDict
+		      CurrentDictionary = newDict
+		    end if
 		    
 		  else
 		    //
@@ -868,6 +1015,8 @@ Private Class TOMLParser
 		    case else
 		      exit while
 		    end select
+		    
+		    byteIndex = byteIndex + 1
 		  wend
 		  
 		  return value
@@ -879,6 +1028,7 @@ Private Class TOMLParser
 		  var value as variant
 		  
 		  select case true
+		  case MaybeParseArray( p, lastByteIndex, byteIndex, value )
 		  case MaybeParseNumber( p, lastByteIndex, byteIndex, value )
 		  case MaybeParseBoolean( p, lastByteIndex, byteIndex, value )
 		  case MaybeParseString( p, lastByteIndex, byteIndex, value )
@@ -890,6 +1040,14 @@ Private Class TOMLParser
 		  return value
 		  
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub RaiseDuplicateKeyException(key As String)
+		  var msg as string = "Duplicate key '" + key + "' on row " + RowNumber.ToString
+		  RaiseException msg
+		  
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
@@ -997,6 +1155,9 @@ Private Class TOMLParser
 	#tag EndConstant
 
 	#tag Constant, Name = kByteCapZ, Type = Double, Dynamic = False, Default = \"90", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteComma, Type = Double, Dynamic = False, Default = \"44", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kByteDot, Type = Double, Dynamic = False, Default = \"46", Scope = Private
