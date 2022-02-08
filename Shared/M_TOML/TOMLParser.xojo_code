@@ -672,6 +672,50 @@ Private Class TOMLParser
 		End Function
 	#tag EndMethod
 
+	#tag Method, Flags = &h21
+		Private Sub ParseKeyAndValueIntoDictionary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, intoDict As Dictionary)
+		  var keys() as string = ParseKeys( p, lastByteIndex, byteIndex )
+		  MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteEquals
+		  byteIndex = byteIndex + 1
+		  
+		  SkipWhitespace p, lastByteIndex, byteIndex
+		  
+		  var value as variant = ParseValue( p, lastByteIndex, byteIndex )
+		  MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
+		  
+		  //
+		  // Create the keys as needed
+		  //
+		  var lastKey as string = keys.Pop
+		  
+		  var dict as Dictionary = intoDict
+		  for i as integer = 0 to keys.LastIndex
+		    var key as string = keys( i )
+		    
+		    var thisDict as variant = dict.Lookup( key, nil )
+		    if thisDict is nil then
+		      thisDict = ParseJSON( "{}" )
+		      dict.Value( key ) = thisDict
+		      dict = thisDict
+		      
+		    elseif thisDict isa Dictionary then
+		      dict = thisDict
+		      
+		    else
+		      RaiseException "They key '" + key + "' is not a table"
+		      
+		    end if
+		  next
+		  
+		  if dict.HasKey( lastKey ) then
+		    RaiseException "Duplicate key '" + lastKey + "' on row " + RowNumber.ToString
+		  end if
+		  
+		  dict.Value( lastKey ) = value
+		  
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h21, Description = 52657475726E7320616E206172726179206F66206B657973207374617274696E67206174207468697320706F736974696F6E
 		Private Function ParseKeys(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String()
 		  //
@@ -960,44 +1004,8 @@ Private Class TOMLParser
 		    //
 		    // Has to be a straight key
 		    //
-		    keys = ParseKeys( p, lastByteIndex, byteIndex )
-		    MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteEquals
-		    byteIndex = byteIndex + 1
+		    ParseKeyAndValueIntoDictionary p, lastByteIndex, byteIndex, CurrentDictionary
 		    
-		    SkipWhitespace p, lastByteIndex, byteIndex
-		    
-		    var value as variant = ParseValue( p, lastByteIndex, byteIndex )
-		    MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
-		    
-		    //
-		    // Create the keys as needed
-		    //
-		    var lastKey as string = keys.Pop
-		    
-		    var dict as Dictionary = CurrentDictionary
-		    for i as integer = 0 to keys.LastIndex
-		      var key as string = keys( i )
-		      
-		      var thisDict as variant = dict.Lookup( key, nil )
-		      if thisDict is nil then
-		        thisDict = ParseJSON( "{}" )
-		        dict.Value( key ) = thisDict
-		        dict = thisDict
-		        
-		      elseif thisDict isa Dictionary then
-		        dict = thisDict
-		        
-		      else
-		        RaiseException "They key '" + key + "' is not a table"
-		        
-		      end if
-		    next
-		    
-		    if dict.HasKey( lastKey ) then
-		      RaiseException "Duplicate key '" + lastKey + "' on row " + RowNumber.ToString
-		    end if
-		    
-		    dict.Value( lastKey ) = value
 		  end if
 		  
 		End Sub
