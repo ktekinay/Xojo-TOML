@@ -170,6 +170,55 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub DateTimeTest()
+		  var toml as string
+		  var d as Dictionary
+		  var dateString as string
+		  var dt as DateTime
+		  var currentTimeZone as TimeZone = TimeZone.Current
+		  
+		  'toml = JoinString( "a=1987-04-06T03:46:24", "b=2001-11-15 15:46:01.88698", "c=2005-09-22T12:01:59.776Z", "d=2011-11-02 18:23:03-07:00" )
+		  dateString = "1987-01-06T03:46:24"
+		  toml = "a=" + DateString
+		  d = ParseTOML_MTC( toml )
+		  dt = d.Value( "a" )
+		  Assert.AreEqual DateString.Replace( "T", " " ), dt.SQLDateTime
+		  Assert.AreEqual 0, dt.Nanosecond
+		  Assert.AreEqual currentTimeZone.SecondsFromGMT, dt.Timezone.SecondsFromGMT
+		  
+		  dateString = "2001-11-15 15:46:01.88698"
+		  toml = "a=" + DateString
+		  d = ParseTOML_MTC( toml )
+		  dt = d.Value( "a" )
+		  Assert.AreEqual DateString.Replace( "T", " " ).Left( dt.SQLDateTime.Length ), dt.SQLDateTime
+		  Assert.AreEqual 886980000, dt.Nanosecond
+		  Assert.AreEqual currentTimeZone.SecondsFromGMT, dt.Timezone.SecondsFromGMT
+		  
+		  dateString = "2005-09-22T12:01:59.776Z"
+		  toml = "a=" + DateString
+		  d = ParseTOML_MTC( toml )
+		  dt = d.Value( "a" )
+		  Assert.AreEqual DateString.Replace( "T", " " ).Left( dt.SQLDateTime.Length ), dt.SQLDateTime
+		  Assert.IsTrue dt.Nanosecond > 775000000 and dt.Nanosecond < 1000000000
+		  Assert.AreEqual 0, dt.Timezone.SecondsFromGMT
+		  
+		  dateString = "2011-11-02 18:23:03-07:00"
+		  toml = "a=" + DateString
+		  d = ParseTOML_MTC( toml )
+		  dt = d.Value( "a" )
+		  Assert.AreEqual DateString.Replace( "T", " " ).Left( dt.SQLDateTime.Length ), dt.SQLDateTime
+		  Assert.AreEqual -7 * 60 * 60 , dt.Timezone.SecondsFromGMT
+		  
+		  dateString = "2011-11-02 18:23:03+07:00"
+		  toml = "a=" + DateString
+		  d = ParseTOML_MTC( toml )
+		  dt = d.Value( "a" )
+		  Assert.AreEqual 7 * 60 * 60 , dt.Timezone.SecondsFromGMT
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub DoubleTest()
 		  var toml as string
 		  var d as Dictionary
@@ -238,6 +287,18 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub LocalDateTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = "a=1967-02-25"
+		  d = ParseTOML_MTC( toml )
+		  var dt as DateTime = d.Value( "a" )
+		  Assert.AreEqual "1967-02-25", dt.SQLDate
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub MultilineBasicStringTest()
 		  var toml as string 
 		  var d as Dictionary
@@ -287,6 +348,21 @@ Inherits TOMLTestGroupBase
 		  Assert.AreEqual 2, d1.KeyCount, "2 items at second level"
 		  Assert.AreEqual 2, d1.Value( "a" ).IntegerValue
 		  Assert.AreEqual 3, d1.Value( "b" ).IntegerValue
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub TableTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = "a={b=1, c=true}"
+		  d = ParseTOML_MTC( toml )
+		  var d1 as Dictionary = d.Value( "a" )
+		  Assert.AreEqual 2, d1.KeyCount
+		  Assert.AreEqual 1, d1.Value( "b" ).IntegerValue
+		  Assert.IsTrue d1.Value( "c" ).BooleanValue
+		  
 		End Sub
 	#tag EndMethod
 

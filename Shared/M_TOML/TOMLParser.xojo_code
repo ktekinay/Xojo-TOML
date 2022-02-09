@@ -268,6 +268,120 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Function MaybeParseDateTime(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  var testIndex as integer = byteIndex
+		  
+		  var hasOtherChars as boolean
+		  var hasSpace as boolean
+		  
+		  while testIndex <= lastByteIndex
+		    var thisByte as integer = p.Byte( testIndex )
+		    
+		    select case thisByte
+		    case kByteZero to kByteNine
+		      //
+		      // Numbers are ok
+		      //
+		    case kByteHyphen, kBytePlus, kByteCapZ, kByteColon, kByteDot
+		      hasOtherChars = true
+		      
+		    case kByteSpace, kByteCapT // T is instead of a space
+		      if hasSpace then
+		        exit while
+		      end if
+		      
+		      hasSpace = true
+		      hasOtherChars = true
+		      
+		    case kByteSpace, kByteTab, kByteEOL
+		      if not hasOtherChars then
+		        //
+		        // Can't be a date or time
+		        //
+		        return false
+		      end if
+		      
+		      exit while
+		      
+		    case else
+		      //
+		      // Not a date or time
+		      //
+		      return false
+		      
+		    end select
+		    
+		    testIndex = testIndex + 1
+		  wend
+		  
+		  //
+		  // If we get here, we have something that might be a date or time
+		  //
+		  
+		  const kMinTimeLen as integer = 8 // HH:MM:SS
+		  const kMinDateLen as integer = 10 // YYYY-MM-DD
+		  
+		  var stringLen as integer = testIndex - byteIndex
+		  
+		  if stringLen < kMinTimeLen then
+		    //
+		    // Guess not
+		    //
+		    return false
+		  end if
+		  
+		  var result as variant
+		  static gmt as new TimeZone( 0 )
+		  
+		  //
+		  // Get the string representation
+		  //
+		  var dateString as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen )
+		  
+		  var match as RegExMatch
+		  
+		  //
+		  // LocalTime?
+		  //
+		  match = RxTimeString.Search( dateString )
+		  if match isa object then
+		    result = M_TOML.RegExMatchToLocalTime( match )
+		    goto Success
+		  end if
+		  
+		  //
+		  // LocalDate?
+		  //
+		  match = RxLocalDateString.Search( dateString )
+		  if match isa object then
+		    result = DateTime.FromString( dateString, nil, gmt )
+		    goto Success
+		  end if
+		  
+		  //
+		  // DateTime?
+		  //
+		  match = RxDateTimeString.Search( dateString )
+		  if match isa object then
+		    result = RegExMatchToDateTime( match )
+		    goto Success
+		  end if
+		  
+		  if result is nil then
+		    return false
+		  end if
+		  
+		  
+		  Success :
+		  
+		  value = result
+		  byteIndex = testIndex
+		  return true
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function MaybeParseNumber(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  var thisByte as integer = p.Byte( byteIndex )
 		  
@@ -433,6 +547,56 @@ Private Class TOMLParser
 		  end select
 		  
 		  return false
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function MaybeParseTable(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  if p.Byte( byteIndex ) <> kByteCurlyBraceOpen then
+		    return false
+		  end if
+		  
+		  byteIndex = byteIndex + 1
+		  var d as Dictionary = ParseJSON( "{}" )
+		  var expectingComma as boolean
+		  
+		  while byteIndex <= lastByteIndex
+		    SkipWhitespace p, lastByteIndex, byteIndex
+		    
+		    if expectingComma then
+		      var thisByte as integer = p.Byte( byteIndex )
+		      select case thisByte
+		      case kByteComma
+		        expectingComma = false
+		        byteIndex = byteIndex + 1
+		        
+		      case kByteCurlyBraceClose
+		        //
+		        // We are done
+		        //
+		        byteIndex = byteIndex + 1
+		        MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
+		        
+		        value = d
+		        return true
+		        
+		      case else
+		        RaiseIllegalCharacterException byteIndex
+		        
+		      end select
+		      
+		    else // Expecting key/value
+		      ParseKeyAndValueIntoDictionary p, lastByteIndex, byteIndex, d
+		      expectingComma = true
+		      
+		    end if
+		  wend
+		  
+		  //
+		  // If we get here, something went wrong
+		  //
+		  RaiseUnexpectedEndOfDataException
 		  
 		End Function
 	#tag EndMethod
@@ -681,7 +845,6 @@ Private Class TOMLParser
 		  SkipWhitespace p, lastByteIndex, byteIndex
 		  
 		  var value as variant = ParseValue( p, lastByteIndex, byteIndex )
-		  MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
 		  
 		  //
 		  // Create the keys as needed
@@ -1005,6 +1168,7 @@ Private Class TOMLParser
 		    // Has to be a straight key
 		    //
 		    ParseKeyAndValueIntoDictionary p, lastByteIndex, byteIndex, CurrentDictionary
+		    MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
 		    
 		  end if
 		  
@@ -1037,6 +1201,8 @@ Private Class TOMLParser
 		  
 		  select case true
 		  case MaybeParseArray( p, lastByteIndex, byteIndex, value )
+		  case MaybeParseTable( p, lastByteIndex, byteIndex, value )
+		  case MaybeParseDateTime( p, lastByteIndex, byteIndex, value )
 		  case MaybeParseNumber( p, lastByteIndex, byteIndex, value )
 		  case MaybeParseBoolean( p, lastByteIndex, byteIndex, value )
 		  case MaybeParseString( p, lastByteIndex, byteIndex, value )
@@ -1159,13 +1325,25 @@ Private Class TOMLParser
 	#tag Constant, Name = kByteCapF, Type = Double, Dynamic = False, Default = \"70", Scope = Private
 	#tag EndConstant
 
+	#tag Constant, Name = kByteCapT, Type = Double, Dynamic = False, Default = \"84", Scope = Private
+	#tag EndConstant
+
 	#tag Constant, Name = kByteCapU, Type = Double, Dynamic = False, Default = \"85", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kByteCapZ, Type = Double, Dynamic = False, Default = \"90", Scope = Private
 	#tag EndConstant
 
+	#tag Constant, Name = kByteColon, Type = Double, Dynamic = False, Default = \"58", Scope = Private
+	#tag EndConstant
+
 	#tag Constant, Name = kByteComma, Type = Double, Dynamic = False, Default = \"44", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteCurlyBraceClose, Type = Double, Dynamic = False, Default = \"125", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kByteCurlyBraceOpen, Type = Double, Dynamic = False, Default = \"123", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kByteDot, Type = Double, Dynamic = False, Default = \"46", Scope = Private
