@@ -95,6 +95,8 @@ Inherits TOMLTestGroupBase
 
 	#tag Method, Flags = &h0
 		Sub BigTOMLTest()
+		  StartProfiling
+		  
 		  self.StartTestTimer( "Parse TOML" )
 		  var fromTOML as Dictionary = ParseTOML_MTC( kBigTOML )
 		  self.LogTestTimer( "Parse TOML" )
@@ -102,6 +104,8 @@ Inherits TOMLTestGroupBase
 		  var fromJSON as Dictionary = ParseJSON( kBigJSON )
 		  var result as boolean = AreSameDictionaries( fromTOML, fromJSON )
 		  Assert.IsTrue result
+		  
+		  StopProfiling
 		End Sub
 	#tag EndMethod
 
