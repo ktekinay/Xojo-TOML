@@ -2,6 +2,28 @@
 Protected Class MTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
+		Sub InlineDictionaryTest()
+		  var d as M_TOML.InlineDictionary
+		  
+		  d = new M_TOML.InlineDictionary
+		  d.Value( "a" ) = 1
+		  d.Value( "a" ) = 2
+		  Assert.AreEqual 2, d.Value( "a" ).IntegerValue
+		  
+		  d = new M_TOML.InlineDictionary
+		  d.Value( "a" ) = 1
+		  d.Value( "A" ) = 2
+		  d.Value( "b" ) = 3
+		  d.Value( "b1" ) = 4
+		  Assert.AreEqual 1, d.Value( "a" ).IntegerValue
+		  Assert.AreEqual 2, d.Value( "A" ).IntegerValue
+		  Assert.AreEqual 3, d.Value( "b" ).IntegerValue
+		  Assert.AreEqual 4, d.Value( "b1" ).IntegerValue
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub LocalTimeTest()
 		  var lt as M_TOML.LocalTime
 		  
