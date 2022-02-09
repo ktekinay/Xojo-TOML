@@ -21,6 +21,13 @@ Protected Module M_TOML
 
 	#tag Method, Flags = &h0
 		Function ParseTOML_MTC(toml As String) As Dictionary
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var parser as new M_TOML.TOMLParser
 		  var dict as Dictionary = parser.Parse( toml )
 		  

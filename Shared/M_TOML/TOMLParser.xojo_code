@@ -2,6 +2,13 @@
 Private Class TOMLParser
 	#tag Method, Flags = &h21
 		Private Function GetChunk(startIndex As Integer, endIndex As Integer) As String
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  if endIndex < startIndex then
 		    return ""
 		  end if
@@ -18,6 +25,13 @@ Private Class TOMLParser
 		  // Get index of the target byte in the row
 		  // Will stop at EOL or a comment
 		  //
+		  
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
 		  
 		  const kDefault as integer = -1
 		  
@@ -46,6 +60,13 @@ Private Class TOMLParser
 		  //
 		  // Will raise an exception if it's not a valid escape character
 		  //
+		  
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
 		  
 		  if byteIndex > lastByteIndex then
 		    var msg as string = "Unexpected end of data"
@@ -143,6 +164,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function MaybeParseArray(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  if p.Byte( byteIndex ) <> kByteSquareBracketOpen then
 		    return false
 		  end if
@@ -205,6 +233,13 @@ Private Class TOMLParser
 		Private Function MaybeParseBoolean(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #pragma unused lastByteIndex
 		  
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  //
 		  // Since the MemoryBlock is padded with an EOL, 
 		  // these IF statements will short-circuit
@@ -243,6 +278,13 @@ Private Class TOMLParser
 		  // Should skip whitespace before calling this
 		  //
 		  
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  if p.Byte( byteIndex ) = kByteHash then
 		    //
 		    // Validate the comment characters
@@ -269,6 +311,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function MaybeParseDateTime(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var testIndex as integer = byteIndex
 		  
 		  var hasOtherChars as boolean
@@ -383,6 +432,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function MaybeParseNumber(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var thisByte as integer = p.Byte( byteIndex )
 		  
 		  if thisByte = kByteZero then
@@ -533,6 +589,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function MaybeParseString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var thisByte as integer = p.Byte( byteIndex )
 		  
 		  select case thisByte
@@ -553,6 +616,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function MaybeParseTable(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  if p.Byte( byteIndex ) <> kByteCurlyBraceOpen then
 		    return false
 		  end if
@@ -602,6 +672,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Sub MaybeRaiseIllegalCharacterException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  SkipWhitespace p, lastByteIndex, byteIndex
 		  
 		  if byteIndex > lastByteIndex or MaybeParseComment( p, lastByteIndex, byteIndex ) then
@@ -621,6 +698,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Sub MaybeRaiseUnexpectedCharException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, expectedByte As Integer)
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  MaybeRaiseUnexpectedEOLException p, lastByteIndex, byteIndex
 		  
 		  if p.Byte( byteIndex ) <> expectedByte then
@@ -635,6 +719,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Sub MaybeRaiseUnexpectedEOLException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  SkipWhitespace p, lastByteIndex, byteIndex
 		  
 		  if byteIndex > lastByteIndex or p.Byte( byteIndex ) = kByteEOL or p.Byte( byteIndex ) = kByteHash then
@@ -646,6 +737,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h0
 		Function Parse(toml As String) As Dictionary
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var dict as Dictionary = ParseJSON( "{}" )
 		  BaseDictionary = dict
 		  CurrentDictionary = dict
@@ -687,6 +785,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function ParseBasicString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var isMultiline as boolean = p.Byte( byteIndex + 1 ) = kByteQuoteDouble and p.Byte( byteIndex + 2 ) = kByteQuoteDouble
 		  
 		  if isMultiline then
@@ -791,6 +896,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function ParseBinary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var value as integer
 		  
 		  while byteIndex <= lastByteIndex
@@ -812,6 +924,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function ParseHex(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var value as integer
 		  
 		  while byteIndex <= lastByteIndex
@@ -837,6 +956,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Sub ParseKeyAndValueIntoDictionary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, intoDict As Dictionary, allowInline As Boolean)
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var keys() as string = ParseKeys( p, lastByteIndex, byteIndex )
 		  MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteEquals
 		  byteIndex = byteIndex + 1
@@ -887,6 +1013,13 @@ Private Class TOMLParser
 		  //
 		  // Should be at the first non-whitespace position
 		  //
+		  
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
 		  
 		  var keys() as string
 		  
@@ -994,6 +1127,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function ParseLiteralString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var isMultiline as boolean = p.Byte( byteIndex + 1 ) = kByteQuoteSingle and p.Byte( byteIndex + 2 ) = kByteQuoteSingle
 		  
 		  if isMultiline then
@@ -1059,6 +1199,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Sub ParseNextRow(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  RowNumber = RowNumber + 1
 		  
 		  SkipWhitespace p, lastByteIndex, byteIndex
@@ -1185,6 +1332,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function ParseOctal(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var value as integer
 		  
 		  while byteIndex <= lastByteIndex
@@ -1205,6 +1359,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Function ParseValue(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Variant
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var value as variant
 		  
 		  select case true
@@ -1268,6 +1429,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Sub SkipToNextRow(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  while byteIndex <= lastByteIndex 
 		    if p.Byte( byteIndex ) = kByteEOL then
 		      byteIndex = byteIndex + 1 // Go to start of next row
@@ -1283,6 +1451,13 @@ Private Class TOMLParser
 
 	#tag Method, Flags = &h21
 		Private Sub SkipWhitespace(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
+		  #if not DebugBuild then
+		    #pragma BoundsChecking false
+		    #pragma BreakOnExceptions false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  while byteIndex <= lastByteIndex 
 		    var val as byte = p.Byte( byteIndex )
 		    if val = kByteSpace or val = kByteTab then
