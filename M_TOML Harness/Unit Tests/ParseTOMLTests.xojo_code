@@ -2,6 +2,26 @@
 Protected Class ParseTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
+		Sub AddToExistingTableTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = JoinString( "[a.b]", "c=2", "[a]", "b.d=3", "c=5" )
+		  d = ParseTOML_MTC( toml )
+		  
+		  Assert.AreEqual 1, d.KeyCount
+		  var d1 as Dictionary = d.Value( "a" )
+		  Assert.AreEqual 2, d1.KeyCount
+		  Assert.AreEqual 5, d1.Value( "c" ).IntegerValue
+		  
+		  d1 = d1.Value( "b" )
+		  Assert.AreEqual 2, d1.KeyCount
+		  Assert.AreEqual 2, d1.Value( "c" ).IntegerValue
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub ArrayHeaderTest()
 		  var toml as string
 		  var d as Dictionary
@@ -22,39 +42,6 @@ Inherits TOMLTestGroupBase
 		  d1 = arr( 1 )
 		  Assert.AreEqual 1, d1.KeyCount, "Second sub count"
 		  Assert.AreEqual 4, d1.Value( "c" ).IntegerValue
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub ArrayTest()
-		  var toml as string
-		  var d as Dictionary
-		  
-		  toml = "a=[1,2,3,]"
-		  d = ParseTOML_MTC( toml )
-		  var arr() as variant = d.Value( "a" )
-		  var arrCount as integer = arr.Count
-		  Assert.AreEqual 3, arrCount
-		  Assert.AreEqual 1, arr( 0 ).IntegerValue
-		  Assert.AreEqual 3, arr( 2 ).IntegerValue
-		  
-		  toml = "a = [1, 2, 3, ['a', 'b']]"
-		  d = ParseTOML_MTC( toml )
-		  arr = d.Value( "a" )
-		  var arr1() as variant = arr( 3 )
-		  Assert.AreEqual "a", arr1( 0 ).StringValue
-		  
-		  toml = JoinString( "a = [", "1,", "2,", "[5,6]", "]" )
-		  d = ParseTOML_MTC( toml )
-		  arr = d.Value( "a" )
-		  arr1 = arr( 2 )
-		  Assert.AreEqual 5, arr1( 0 ).IntegerValue
-		  
-		  toml = JoinString( "a = [", "1, # comment", "2,", "[5,6]", "]" )
-		  d = ParseTOML_MTC( toml )
-		  arr = d.Value( "a" )
-		  arr1 = arr( 2 )
-		  Assert.AreEqual 5, arr1( 0 ).IntegerValue
 		End Sub
 	#tag EndMethod
 
@@ -270,6 +257,68 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub InlineArrayTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = "a=[1,2,3,]"
+		  d = ParseTOML_MTC( toml )
+		  var arr() as variant = d.Value( "a" )
+		  var arrCount as integer = arr.Count
+		  Assert.AreEqual 3, arrCount
+		  Assert.AreEqual 1, arr( 0 ).IntegerValue
+		  Assert.AreEqual 3, arr( 2 ).IntegerValue
+		  
+		  toml = "a = [1, 2, 3, ['a', 'b']]"
+		  d = ParseTOML_MTC( toml )
+		  arr = d.Value( "a" )
+		  var arr1() as variant = arr( 3 )
+		  Assert.AreEqual "a", arr1( 0 ).StringValue
+		  
+		  toml = JoinString( "a = [", "1,", "2,", "[5,6]", "]" )
+		  d = ParseTOML_MTC( toml )
+		  arr = d.Value( "a" )
+		  arr1 = arr( 2 )
+		  Assert.AreEqual 5, arr1( 0 ).IntegerValue
+		  
+		  toml = JoinString( "a = [", "1, # comment", "2,", "[5,6]", "]" )
+		  d = ParseTOML_MTC( toml )
+		  arr = d.Value( "a" )
+		  arr1 = arr( 2 )
+		  Assert.AreEqual 5, arr1( 0 ).IntegerValue
+		  
+		  toml = JoinString( "a=1", "b=[4,5,6]", "c=10" )
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual 3, d.KeyCount
+		  arr = d.Value( "b" )
+		  arrCount = arr.Count
+		  Assert.AreEqual 3, arrCount
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub InlineTableTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = "a={b=1, c=true}"
+		  d = ParseTOML_MTC( toml )
+		  var d1 as Dictionary = d.Value( "a" )
+		  Assert.AreEqual 2, d1.KeyCount
+		  Assert.AreEqual 1, d1.Value( "b" ).IntegerValue
+		  Assert.IsTrue d1.Value( "c" ).BooleanValue
+		  
+		  toml = JoinString( "a=1", "b={a=2, b=3}", "c=4" )
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual 3, d.KeyCount
+		  Assert.AreEqual 1, d.Value( "a" ).IntegerValue
+		  Assert.AreEqual 4, d.Value( "c" ).IntegerValue
+		  d1 = d.Value( "b" )
+		  Assert.AreEqual 2, d1.KeyCount
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub InvalidCommentTest()
 		  var toml as string
 		  
@@ -325,6 +374,58 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub PreventAddToInlineTableTest()
+		  var toml as string
+		  
+		  toml = JoinString( "a = {b=2}", "a.c=3" )
+		  
+		  #pragma BreakOnExceptions false
+		  try
+		    call ParseTOML_MTC( toml )
+		    Assert.Fail "Allowed addition to inline table"
+		  catch err as M_TOML.TOMLException
+		    Assert.Pass
+		  end try
+		  #pragma BreakOnExceptions default
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub PreventEmptyArrayKeyTest()
+		  var tests() as string = array( "[[]]", "[[""""]]", "[['']]" )
+		  
+		  for each toml as string in tests
+		    #pragma BreakOnExceptions false
+		    try
+		      call ParseTOML_MTC( toml )
+		      Assert.Fail "Allowed empty table key", toml
+		    catch err as M_TOML.TOMLException
+		      Assert.Pass
+		    end try
+		    #pragma BreakOnExceptions default
+		  next
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub PreventEmptyTableKeyTest()
+		  var tests() as string = array( "[]", "[""""]", "['']" )
+		  
+		  for each toml as string in tests
+		    #pragma BreakOnExceptions false
+		    try
+		      call ParseTOML_MTC( toml )
+		      Assert.Fail "Allowed empty table key", toml
+		    catch err as M_TOML.TOMLException
+		      Assert.Pass
+		    end try
+		    #pragma BreakOnExceptions default
+		  next
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub QuotedKeyTest()
 		  var toml as string
 		  var d as Dictionary
@@ -348,21 +449,6 @@ Inherits TOMLTestGroupBase
 		  Assert.AreEqual 2, d1.KeyCount, "2 items at second level"
 		  Assert.AreEqual 2, d1.Value( "a" ).IntegerValue
 		  Assert.AreEqual 3, d1.Value( "b" ).IntegerValue
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub TableTest()
-		  var toml as string
-		  var d as Dictionary
-		  
-		  toml = "a={b=1, c=true}"
-		  d = ParseTOML_MTC( toml )
-		  var d1 as Dictionary = d.Value( "a" )
-		  Assert.AreEqual 2, d1.KeyCount
-		  Assert.AreEqual 1, d1.Value( "b" ).IntegerValue
-		  Assert.IsTrue d1.Value( "c" ).BooleanValue
-		  
 		End Sub
 	#tag EndMethod
 

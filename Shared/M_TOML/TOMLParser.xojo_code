@@ -558,7 +558,7 @@ Private Class TOMLParser
 		  end if
 		  
 		  byteIndex = byteIndex + 1
-		  var d as Dictionary = ParseJSON( "{}" )
+		  var d as Dictionary = new M_TOML.InlineDictionary
 		  var expectingComma as boolean
 		  
 		  while byteIndex <= lastByteIndex
@@ -576,7 +576,6 @@ Private Class TOMLParser
 		        // We are done
 		        //
 		        byteIndex = byteIndex + 1
-		        MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
 		        
 		        value = d
 		        return true
@@ -587,7 +586,7 @@ Private Class TOMLParser
 		      end select
 		      
 		    else // Expecting key/value
-		      ParseKeyAndValueIntoDictionary p, lastByteIndex, byteIndex, d
+		      ParseKeyAndValueIntoDictionary p, lastByteIndex, byteIndex, d, true
 		      expectingComma = true
 		      
 		    end if
@@ -837,7 +836,7 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub ParseKeyAndValueIntoDictionary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, intoDict As Dictionary)
+		Private Sub ParseKeyAndValueIntoDictionary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, intoDict As Dictionary, allowInline As Boolean)
 		  var keys() as string = ParseKeys( p, lastByteIndex, byteIndex )
 		  MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteEquals
 		  byteIndex = byteIndex + 1
@@ -862,6 +861,10 @@ Private Class TOMLParser
 		      dict = thisDict
 		      
 		    elseif thisDict isa Dictionary then
+		      if allowInline = false and thisDict isa InlineDictionary then
+		        RaiseException "Cannot add to the inline table referenced by '" + key + "' on row " + RowNumber.ToString
+		      end if
+		      
 		      dict = thisDict
 		      
 		    else
@@ -1167,7 +1170,7 @@ Private Class TOMLParser
 		    //
 		    // Has to be a straight key
 		    //
-		    ParseKeyAndValueIntoDictionary p, lastByteIndex, byteIndex, CurrentDictionary
+		    ParseKeyAndValueIntoDictionary p, lastByteIndex, byteIndex, CurrentDictionary, false
 		    MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
 		    
 		  end if
