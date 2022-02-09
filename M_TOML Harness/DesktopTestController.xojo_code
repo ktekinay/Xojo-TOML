@@ -12,6 +12,8 @@ Inherits TestController
 		  
 		  group = new GenerateTOMLTests( self, "Generate TOML" )
 		  group = new ParseTOMLTests( self, "Parse TOML" )
+		  group = new LongTOMLTests( self, "Long TOML Tests" )
+		  group.IncludeGroup = false
 		  group = new MTOMLTests( self, "M_TOML" )
 		End Sub
 	#tag EndEvent

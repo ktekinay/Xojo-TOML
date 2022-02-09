@@ -1139,8 +1139,13 @@ Private Class TOMLParser
 		        
 		      else
 		        var value as variant = CurrentDictionary.Value( key )
-		        if value isa Dictionary then
+		        if value.IsArray and value.ArrayElementType = Variant.TypeObject and IsDictionaryArray( value ) then
+		          var arr() as variant = value
+		          keyDict = arr( arr.LastIndex )
+		          
+		        elseif value isa Dictionary then
 		          keyDict = value
+		          
 		        else
 		          RaiseDuplicateKeyException key
 		        end if

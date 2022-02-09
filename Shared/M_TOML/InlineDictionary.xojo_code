@@ -16,8 +16,14 @@ Inherits Dictionary
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Sub Constructor()
-		  self.Constructor( AddressOf CaseDelegate )
+		Sub Constructor(ParamArray entries() As Pair)
+		  super.Constructor( AddressOf CaseDelegate )
+		  
+		  for each p as pair in entries
+		    Value( p.Left ) = p.Right
+		  next
+		  
+		  
 		End Sub
 	#tag EndMethod
 

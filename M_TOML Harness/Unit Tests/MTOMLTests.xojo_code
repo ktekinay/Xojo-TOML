@@ -20,6 +20,9 @@ Inherits TOMLTestGroupBase
 		  Assert.AreEqual 3, d.Value( "b" ).IntegerValue
 		  Assert.AreEqual 4, d.Value( "b1" ).IntegerValue
 		  
+		  d = new M_TOML.InlineDictionary( "a" : 1, "A" : 2 )
+		  Assert.AreEqual 1, d.Value( "a" ).IntegerValue
+		  Assert.AreEqual 2, d.Value( "A" ).IntegerValue
 		End Sub
 	#tag EndMethod
 
