@@ -4,7 +4,7 @@ Private Class TOMLParser
 		Private Function GetChunk(startIndex As Integer, endIndex As Integer) As String
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -28,7 +28,7 @@ Private Class TOMLParser
 		  
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -63,7 +63,7 @@ Private Class TOMLParser
 		  
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -166,7 +166,7 @@ Private Class TOMLParser
 		Private Function MaybeParseArray(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -235,7 +235,7 @@ Private Class TOMLParser
 		  
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -280,7 +280,7 @@ Private Class TOMLParser
 		  
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -313,7 +313,7 @@ Private Class TOMLParser
 		Private Function MaybeParseDateTime(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -434,7 +434,7 @@ Private Class TOMLParser
 		Private Function MaybeParseNumber(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -591,7 +591,7 @@ Private Class TOMLParser
 		Private Function MaybeParseString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -618,7 +618,7 @@ Private Class TOMLParser
 		Private Function MaybeParseTable(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -674,7 +674,7 @@ Private Class TOMLParser
 		Private Sub MaybeRaiseIllegalCharacterException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -700,7 +700,7 @@ Private Class TOMLParser
 		Private Sub MaybeRaiseUnexpectedCharException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, expectedByte As Integer)
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -721,7 +721,7 @@ Private Class TOMLParser
 		Private Sub MaybeRaiseUnexpectedEOLException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -739,7 +739,7 @@ Private Class TOMLParser
 		Function Parse(toml As String) As Dictionary
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -787,7 +787,7 @@ Private Class TOMLParser
 		Private Function ParseBasicString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -898,7 +898,7 @@ Private Class TOMLParser
 		Private Function ParseBinary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -926,7 +926,7 @@ Private Class TOMLParser
 		Private Function ParseHex(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -958,7 +958,7 @@ Private Class TOMLParser
 		Private Sub ParseKeyAndValueIntoDictionary(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, intoDict As Dictionary, allowInline As Boolean)
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -1016,7 +1016,7 @@ Private Class TOMLParser
 		  
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -1129,7 +1129,7 @@ Private Class TOMLParser
 		Private Function ParseLiteralString(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As String
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -1201,7 +1201,7 @@ Private Class TOMLParser
 		Private Sub ParseNextRow(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -1334,7 +1334,7 @@ Private Class TOMLParser
 		Private Function ParseOctal(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Integer
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -1361,7 +1361,7 @@ Private Class TOMLParser
 		Private Function ParseValue(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer) As Variant
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -1431,7 +1431,7 @@ Private Class TOMLParser
 		Private Sub SkipToNextRow(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
@@ -1453,7 +1453,7 @@ Private Class TOMLParser
 		Private Sub SkipWhitespace(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer)
 		  #if not DebugBuild then
 		    #pragma BoundsChecking false
-		    #pragma BreakOnExceptions false
+		    #pragma BackgroundTasks false
 		    #pragma NilObjectChecking false
 		    #pragma StackOverflowChecking false
 		  #endif
