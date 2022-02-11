@@ -2,6 +2,9 @@
 Protected Module M_TOML
 	#tag Method, Flags = &h0
 		Function GenerateTOML_MTC(dict As Dictionary) As String
+		  var generator as new M_TOML.TOMLGenerator
+		  var result as string = generator.Generate( dict )
+		  return result
 		  
 		End Function
 	#tag EndMethod

@@ -33,6 +33,7 @@ Class=LongTOMLTests;Unit Tests/LongTOMLTests.xojo_code;&h000000003CD837FF;&h0000
 Class=LocalTime;../Shared/M_TOML/LocalTime.xojo_code;&h0000000058F8B7FF;&h0000000018BCA7FF;false
 Class=MTOMLTests;Unit Tests/MTOMLTests.xojo_code;&h0000000064D907FF;&h0000000073DCF7FF;false
 Class=InlineDictionary;../Shared/M_TOML/InlineDictionary.xojo_code;&h0000000003DBCFFF;&h0000000018BCA7FF;false
+Class=TOMLGenerator;../Shared/M_TOML/TOMLGenerator.xojo_code;&h00000000014447FF;&h0000000018BCA7FF;false
 DefaultWindow=XojoUnitTestWindow
 AppMenuBar=MainMenuBar
 MajorVersion=1

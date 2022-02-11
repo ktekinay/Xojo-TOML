@@ -1,6 +1,24 @@
 #tag Class
 Protected Class GenerateTOMLTests
 Inherits TOMLTestGroupBase
+	#tag Method, Flags = &h0
+		Sub BasicTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = "b"
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreEqual "a = ""b""" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = 2
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 2" + EndOfLine, toml
+		End Sub
+	#tag EndMethod
+
+
 	#tag ViewBehavior
 		#tag ViewProperty
 			Name="Duration"
