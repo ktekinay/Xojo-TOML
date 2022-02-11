@@ -4,7 +4,7 @@ Protected Module M_TOML
 		Function GenerateTOML_MTC(dict As Dictionary) As String
 		  var generator as new M_TOML.TOMLGenerator
 		  var result as string = generator.Generate( dict )
-		  return result
+		  return result.TrimLeft
 		  
 		End Function
 	#tag EndMethod

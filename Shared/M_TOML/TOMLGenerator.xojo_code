@@ -481,6 +481,7 @@ Private Class TOMLGenerator
 		    
 		    if IsDictionaryArray( value ) then
 		      arrayKeys.Value( key ) = value
+		      
 		    elseif value isa Dictionary and not ( value isa M_TOML.InlineDictionary ) then
 		      dictionaryKeys.Value( key ) = value
 		      
@@ -492,6 +493,73 @@ Private Class TOMLGenerator
 		    end if
 		    
 		  next
+		  
+		  //
+		  // Dictionaries
+		  //
+		  keys = dictionaryKeys.Keys
+		  values = dictionaryKeys.Values
+		  
+		  for i as integer = 0 to keys.LastIndex
+		    var key as string = keys( i )
+		    var embeddedDict as Dictionary = values( i )
+		    
+		    key = EncodeKey( key )
+		    KeyStack.Add key
+		    
+		    OutputArr.Add EndOfLine
+		    OutputArr.Add indent
+		    OutputArr.Add kSquareBracketOpen
+		    OutputArr.Add kSpace
+		    OutputArr.Add String.FromArray( KeyStack, "." )
+		    OutputArr.Add kSpace
+		    OutputArr.Add kSquareBracketClose
+		    OutputArr.Add EndOfLine
+		    
+		    CurrentLevel = CurrentLevel + 1
+		    ProcessDictionary embeddedDict
+		    CurrentLevel = CurrentLevel -1
+		    
+		    call KeyStack.Pop
+		  next
+		  
+		  //
+		  // Arrays
+		  //
+		  keys = arrayKeys.Keys
+		  values = arrayKeys.Values
+		  
+		  for i as integer = 0 to keys.LastIndex
+		    var key as string = keys( i )
+		    var a as auto = values( i )
+		    var arr() as object = a
+		    
+		    for each o as object in arr
+		      var arrayDict as Dictionary = Dictionary( o )
+		      
+		      key = EncodeKey( key )
+		      KeyStack.Add key
+		      
+		      OutputArr.Add EndOfLine
+		      OutputArr.Add indent
+		      OutputArr.Add kSquareBracketOpen
+		      OutputArr.Add kSquareBracketOpen
+		      OutputArr.Add kSpace
+		      OutputArr.Add String.FromArray( KeyStack, "." )
+		      OutputArr.Add kSpace
+		      OutputArr.Add kSquareBracketClose
+		      OutputArr.Add kSquareBracketClose
+		      OutputArr.Add EndOfLine
+		      
+		      CurrentLevel = CurrentLevel + 1
+		      ProcessDictionary arrayDict
+		      CurrentLevel = CurrentLevel -1
+		      
+		      call KeyStack.Pop
+		    next
+		  next
+		  
+		  
 		End Sub
 	#tag EndMethod
 

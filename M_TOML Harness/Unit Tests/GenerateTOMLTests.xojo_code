@@ -2,6 +2,34 @@
 Protected Class GenerateTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
+		Sub ArrayOfDictTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  var arr() as Dictionary
+		  
+		  var d1 as new Dictionary
+		  d1.Value( "b" ) = 2
+		  d1.Value( "c" ) = 3
+		  arr.Add d1
+		  
+		  d1 = new Dictionary
+		  arr.Add d1
+		  
+		  d1 = new Dictionary
+		  d1.Value( "d" ) = true
+		  arr.Add d1
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = arr
+		  
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreEqual kExpectedArrayOfDictTOML, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub BasicTest()
 		  var d as Dictionary
 		  var toml as string
@@ -101,7 +129,7 @@ Inherits TOMLTestGroupBase
 		  d.Value( "z" ) = true
 		  
 		  var toml as string = GenerateTOML_MTC( d )
-		  Assert.AreSame kExpectedEmbeddedTOML, toml
+		  Assert.AreSame kExpectedEmbeddedDictTOML, toml
 		  
 		End Sub
 	#tag EndMethod
@@ -247,7 +275,10 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 
-	#tag Constant, Name = kExpectedEmbeddedTOML, Type = String, Dynamic = False, Default = \"z \x3D true\n\n[a]\nc \x3D 1\nd \x3D 2\n\n[a.b]\ne \x3D false\n", Scope = Private
+	#tag Constant, Name = kExpectedArrayOfDictTOML, Type = String, Dynamic = False, Default = \"[[ a ]]\n  b \x3D 2\n  c \x3D 3\n\n[[ a ]]\n\n[[ a ]]\n  d \x3D true\n", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kExpectedEmbeddedDictTOML, Type = String, Dynamic = False, Default = \"z \x3D true\n\n[ a ]\n  c \x3D 1\n  d \x3D 2\n\n  [ a.b ]\n    e \x3D false\n", Scope = Private
 	#tag EndConstant
 
 
