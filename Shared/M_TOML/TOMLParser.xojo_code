@@ -163,6 +163,19 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Function IsDictionaryArray(arr() As Variant) As Boolean
+		  for each item as variant in arr
+		    if item.Type <> Variant.TypeObject or not ( item isa Dictionary ) then
+		      return false
+		    end if
+		  next
+		  
+		  return true
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function MaybeParseArray(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, ByRef value As Variant) As Boolean
 		  #if not DebugBuild then
 		    #pragma BackgroundTasks false
