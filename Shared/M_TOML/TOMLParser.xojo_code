@@ -494,6 +494,24 @@ Private Class TOMLParser
 		    sign = -1
 		  end select
 		  
+		  if p.Byte( testIndex ) = kByteLowI and p.Byte( testIndex + 1 ) = kByteLowN and p.Byte( testIndex + 2 ) = kByteLowF then
+		    static inf as double = val( "inf" )
+		    static negInf as double = val( "-inf" )
+		    
+		    value = if( sign = -1, negInf, inf )
+		    byteIndex = testIndex + 3
+		    return true
+		    
+		  elseif p.Byte( testIndex ) = kByteLowN and p.Byte( testIndex + 1 ) = kByteLowA and p.Byte( testIndex + 2 ) = kByteLowN then
+		    static nan as double = val( "nan" )
+		    static negNan as double = val( "-nan" )
+		    
+		    value = if( sign = -1, negNan, nan )
+		    byteIndex = testIndex + 3
+		    return true
+		    
+		  end if
+		  
 		  //
 		  // Look for integer
 		  //
