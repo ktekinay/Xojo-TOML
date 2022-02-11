@@ -6,7 +6,7 @@ Private Class TOMLGenerator
 		  
 		  if rxValidChars is nil then
 		    rxValidChars = new RegEx
-		    rxValidChars.SearchPattern = "^[a-z0-9\-_]+$"
+		    rxValidChars.SearchPattern = "\A[a-z0-9\-_]+\z"
 		  end if
 		  
 		  if rxValidChars.Search( key ) isa RegExMatch then
@@ -16,12 +16,13 @@ Private Class TOMLGenerator
 		  var encoded as string = ToBasicString( key )
 		  return encoded
 		  
-		  
 		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
 		Private Function EncodeValue(value As Variant) As String
+		  static loc as new Locale( "en-US" )
+		  
 		  var result as string
 		  
 		  select case value.Type
@@ -34,10 +35,37 @@ Private Class TOMLGenerator
 		    result = ToBasicString( s )
 		    
 		  case Variant.TypeInteger, Variant.TypeInt32, Variant.TypeInt64
-		    result = value.IntegerValue.ToString
+		    result = value.IntegerValue.ToString( loc, "#,##0" )
+		    result = result.ReplaceAll( ",", "_" )
 		    
 		  case Variant.TypeDouble, Variant.TypeSingle
-		    #pragma warning "Finish encoding doubles"
+		    var d as double = value.DoubleValue
+		    var ad as double = abs( d )
+		    
+		    if d.IsNotANumber then
+		      const kNan as string = "nan"
+		      const kNegNan as string = "-nan"
+		      
+		      static nan as double = val( kNan )
+		      static negNan as double = -nan
+		      
+		      result = if( d = negNan, kNegNan, kNan )
+		      
+		    elseif d.IsInfinite then
+		      const kInf as string = "inf"
+		      const kNegInf as string = "-inf"
+		      
+		      result = if( d <> ad, kNegInf, kInf )
+		      
+		    elseif ad > 1.0e12 or ad < 1.0e-2 then
+		      result = d.ToString( loc, "0.0#######E0" )
+		      
+		    else
+		      result = d.ToString( loc, "#,##0.0##############" )
+		      
+		    end if
+		    
+		    result = result.ReplaceAll( ",", "_" )
 		    
 		  case Variant.TypeBoolean
 		    const kTrue as string = "true"
@@ -46,6 +74,7 @@ Private Class TOMLGenerator
 		    result = if( value.BooleanValue, kTrue, kFalse )
 		    
 		  case Variant.TypeObject
+		    #pragma warning "Finish encoding objects"
 		    
 		  case else
 		    if value.IsArray then

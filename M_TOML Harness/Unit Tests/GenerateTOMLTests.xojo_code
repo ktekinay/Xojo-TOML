@@ -18,6 +18,125 @@ Inherits TOMLTestGroupBase
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Sub DoubleTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = 1.0
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 1.0" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = 1234567890.12
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 1_234_567_890.12" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = -1234567890.12
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = -1_234_567_890.12" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = 9.0e-10
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 9.0E-10" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = -9.0e-10
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = -9.0E-10" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = 9.123e12
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 9.123E12" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = -9.123e12
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = -9.123E12" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = val( "inf" )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = inf" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = val( "-inf" )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = -inf" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = val( "nan" )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = nan" + EndOfLine, toml
+		  
+		  'd = new Dictionary
+		  'var db as double = val( "nan" )
+		  'db = -db
+		  'd.Value( "a" ) = db
+		  'toml = GenerateTOML_MTC( d )
+		  'Assert.AreSame "a = -nan" + EndOfLine, toml
+		  
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub IntegerTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = 1
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 1" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = 1234567890
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 1_234_567_890" + EndOfLine, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub KeyTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" + &uA + "b" ) = 1
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame """a\nb"" = 1" + EndOfLine, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub StringTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = "a" + &u9 + "b"
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = ""a\tb""" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = "a" + &u8 + "b"
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = ""a\bb""" + EndOfLine, toml
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = "a" + &u7F + "b"
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = ""a\u007Fb""" + EndOfLine, toml
+		End Sub
+	#tag EndMethod
+
 
 	#tag ViewBehavior
 		#tag ViewProperty
