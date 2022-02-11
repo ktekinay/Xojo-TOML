@@ -211,6 +211,12 @@ Inherits TOMLTestGroupBase
 		  var d as Dictionary
 		  
 		  var actual() as string = array( _
+		  "inf", _
+		  "-inf", _
+		  "+inf", _
+		  "nan", _
+		  "-nan", _
+		  "+nan", _
 		  "+1.2", _
 		  "-3.4", _
 		  "3.4e5", _
@@ -221,7 +227,7 @@ Inherits TOMLTestGroupBase
 		  for each item as string in actual
 		    toml = "key1 = " + item
 		    d = ParseTOML_MTC( toml )
-		    Assert.AreEqual item.ToDouble, d.Value( "key1" ).DoubleValue, item
+		    Assert.IsTrue item.ToDouble.Equals( d.Value( "key1" ).DoubleValue )
 		  next
 		  
 		  
