@@ -1,6 +1,356 @@
 #tag Class
 Private Class TOMLGenerator
 	#tag Method, Flags = &h21
+		Private Sub AddKeyAndValue(key As String, value As Variant, toArr() As String = Nil)
+		  if toArr = nil then
+		    toArr = OutputArr
+		  end if
+		  
+		  key = EncodeKey( key )
+		  var valueString as string = EncodeValue( value )
+		  
+		  toArr.Add key
+		  toArr.Add kEqualsWithSpaces
+		  toArr.Add valueString
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub Constructor()
+		  if USLocale is nil then
+		    USLocale = new Locale( "en-US" )
+		  end if
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function EncodeArray(value As Variant) As String
+		  var result() as string
+		  
+		  const kAddEOLThreshold as integer = 2
+		  
+		  var addEOLBetweenElements as boolean
+		  
+		  result.Add kSquareBracketOpen
+		  CurrentLevel = CurrentLevel + 1
+		  var indent as string = IndentForLevel
+		  
+		  select case value.ArrayElementType
+		  case Variant.TypeString
+		    var arr() as string = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each s as string in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add ToBasicString( s )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeText
+		    var arr() as text = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each t as text in arr
+		      var s as string = t
+		      
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add ToBasicString( s )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeBoolean
+		    var arr() as boolean = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each b as boolean in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add if( b, kTrue, kFalse )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeInt32
+		    var arr() as Int32 = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each i as integer in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add EncodeInteger( i )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeInt64
+		    var arr() as Int64 = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each i as integer in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add EncodeInteger( i )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeInteger
+		    var arr() as integer = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each i as integer in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add EncodeInteger( i )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeDouble
+		    var arr() as double = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each d as double in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add EncodeDouble( d )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeSingle
+		    var arr() as single = value
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each d as double in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add EncodeDouble( d )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  case Variant.TypeObject
+		    var a as auto = value
+		    var arr() as object = a
+		    
+		    if arr.Count > kAddEOLThreshold then
+		      addEOLBetweenElements = true
+		      result.Add EndOfLine
+		    else
+		      result.Add kSpace
+		    end if
+		    
+		    for each o as variant in arr
+		      if addEOLBetweenElements then
+		        result.Add indent
+		      end if
+		      
+		      result.Add EncodeValue( o )
+		      
+		      if addEOLBetweenElements then
+		        result.Add kComma
+		        result.Add EndOfLine
+		      else
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    
+		  end select
+		  
+		  CurrentLevel = CurrentLevel - 1
+		  if addEOLBetweenElements then
+		    result.Add IndentForLevel
+		  end if
+		  result.Add kSquareBracketClose
+		  
+		  return String.FromArray( result, "" )
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function EncodeDouble(value As Double) As String
+		  var result as string
+		  
+		  var d as double = value
+		  var ad as double = abs( d )
+		  
+		  if d.IsNotANumber then
+		    const kNan as string = "nan"
+		    const kNegNan as string = "-nan"
+		    
+		    static nan as double = val( kNan )
+		    static negNan as double = -nan
+		    
+		    result = if( d = negNan, kNegNan, kNan )
+		    
+		  elseif d.IsInfinite then
+		    const kInf as string = "inf"
+		    const kNegInf as string = "-inf"
+		    
+		    result = if( d <> ad, kNegInf, kInf )
+		    
+		  elseif ad > 1.0e12 or ad < 1.0e-2 then
+		    result = d.ToString( USLocale, "0.0#######E0" )
+		    
+		  else
+		    result = d.ToString( USLocale, "#,##0.0##############" )
+		    result = result.ReplaceAll( USLocale.GroupingSeparator, "_" )
+		  end if
+		  
+		  result = result.ReplaceAll( ",", "_" )
+		  return result
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function EncodeInlineTable(d As Dictionary) As String
+		  var result() as string
+		  
+		  result.Add kCurlyBraceOpen
+		  
+		  var keys() as variant = d.Keys
+		  var values() as variant = d.Values
+		  
+		  if keys.Count <> 0 then
+		    result.Add kSpace
+		    for i as integer = 0 to keys.LastIndex
+		      var key as string = keys( i )
+		      var value as variant = values( i )
+		      
+		      AddKeyAndValue key, value, result
+		      if i <> keys.LastIndex then
+		        result.Add kCommaAndSpace
+		      end if
+		    next
+		    result.Add kSpace
+		  end if
+		  
+		  result.Add kCurlyBraceClose
+		  return String.FromArray( result, "" )
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function EncodeInteger(value As Integer) As String
+		  var result as string = value.ToString( USLocale, "#,##0" )
+		  result = result.ReplaceAll( USLocale.GroupingSeparator, "_" )
+		  return result
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function EncodeKey(key As String) As String
 		  static rxValidChars as RegEx
 		  
@@ -21,9 +371,11 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeValue(value As Variant) As String
-		  static loc as new Locale( "en-US" )
-		  
 		  var result as string
+		  
+		  if value.IsArray then
+		    return EncodeArray( value )
+		  end if
 		  
 		  select case value.Type
 		  case Variant.TypeString
@@ -35,56 +387,24 @@ Private Class TOMLGenerator
 		    result = ToBasicString( s )
 		    
 		  case Variant.TypeInteger, Variant.TypeInt32, Variant.TypeInt64
-		    result = value.IntegerValue.ToString( loc, "#,##0" )
-		    result = result.ReplaceAll( ",", "_" )
+		    result = EncodeInteger( value )
 		    
 		  case Variant.TypeDouble, Variant.TypeSingle
-		    var d as double = value.DoubleValue
-		    var ad as double = abs( d )
-		    
-		    if d.IsNotANumber then
-		      const kNan as string = "nan"
-		      const kNegNan as string = "-nan"
-		      
-		      static nan as double = val( kNan )
-		      static negNan as double = -nan
-		      
-		      result = if( d = negNan, kNegNan, kNan )
-		      
-		    elseif d.IsInfinite then
-		      const kInf as string = "inf"
-		      const kNegInf as string = "-inf"
-		      
-		      result = if( d <> ad, kNegInf, kInf )
-		      
-		    elseif ad > 1.0e12 or ad < 1.0e-2 then
-		      result = d.ToString( loc, "0.0#######E0" )
-		      
-		    else
-		      result = d.ToString( loc, "#,##0.0##############" )
-		      
-		    end if
-		    
-		    result = result.ReplaceAll( ",", "_" )
+		    result = EncodeDouble( value )
 		    
 		  case Variant.TypeBoolean
-		    const kTrue as string = "true"
-		    const kFalse as string = "false"
-		    
 		    result = if( value.BooleanValue, kTrue, kFalse )
 		    
 		  case Variant.TypeObject
 		    #pragma warning "Finish encoding objects"
 		    
-		  case else
-		    if value.IsArray then
-		      #pragma warning "Finish encoding arrays"
-		      
-		    else
-		      var err as new InvalidArgumentException
-		      raise err
-		      
+		    if value isa Dictionary then
+		      result = EncodeInlineTable( value )
 		    end if
+		    
+		  case else
+		    var err as new InvalidArgumentException
+		    raise err
 		    
 		  end select 
 		  
@@ -95,7 +415,8 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h0
 		Function Generate(d As Dictionary) As String
-		  ProcessDictionary( d, 0 )
+		  CurrentLevel = 0
+		  ProcessDictionary( d )
 		  var result as string = String.FromArray( OutputArr, "" )
 		  return result
 		  
@@ -103,24 +424,50 @@ Private Class TOMLGenerator
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Shared Function IndentForLevel(level As Integer) As String
-		  for i as integer = indents.Count to level
-		    indents.Add indents( i - 1 ) + kIndent
+		Private Function IndentForLevel() As String
+		  for level as integer = indents.Count to CurrentLevel
+		    indents.Add indents( level - 1 ) + kIndent
 		  next
 		  
-		  return indents( level )
+		  return indents( CurrentLevel )
 		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub ProcessDictionary(d As Dictionary, level As Integer)
+		Private Function IsDictionaryArray(value As Variant) As Boolean
+		  if not value.IsArray then
+		    return false
+		  end if
+		  
+		  if value.ArrayElementType <> Variant.TypeObject then
+		    return false
+		  end if
+		  
+		  var a as auto = value
+		  var arr() as object = a
+		  
+		  if arr.Count = 0 then
+		    return false
+		  end if
+		  
+		  for each item as object in arr
+		    if not ( item isa Dictionary ) then
+		      return false
+		    end if
+		  next
+		  
+		  return true
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub ProcessDictionary(d As Dictionary)
 		  //
 		  // The caller would have added the reference key for this Dictionary, if any
 		  //
 		  
-		  const kEquals as string = " = "
-		  
-		  var indent as string = if( level = 0, "", IndentForLevel( level ) )
+		  var indent as string = IndentForLevel
 		  
 		  var dictionaryKeys as new Dictionary
 		  var arrayKeys as new Dictionary
@@ -132,19 +479,14 @@ Private Class TOMLGenerator
 		    var key as string = keys( i )
 		    var value as variant = values( i )
 		    
-		    if value.IsArray and IsDictionaryArray( value ) then
+		    if IsDictionaryArray( value ) then
 		      arrayKeys.Value( key ) = value
 		    elseif value isa Dictionary and not ( value isa M_TOML.InlineDictionary ) then
 		      dictionaryKeys.Value( key ) = value
 		      
 		    else
-		      key = EncodeKey( key )
-		      var valueString as string = EncodeValue( value )
-		      
-		      OutPutArr.Add indent
-		      OutputArr.Add key
-		      OutputArr.Add kEquals
-		      OutputArr.Add valueString
+		      OutputArr.Add indent
+		      AddKeyAndValue key, value
 		      OutputArr.Add EndOfLine
 		      
 		    end if
@@ -264,6 +606,10 @@ Private Class TOMLGenerator
 
 
 	#tag Property, Flags = &h21
+		Private CurrentLevel As Integer
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
 		Private Shared Indents(0) As String
 	#tag EndProperty
 
@@ -279,11 +625,45 @@ Private Class TOMLGenerator
 		Private StringEncoderMB As MemoryBlock
 	#tag EndProperty
 
+	#tag Property, Flags = &h21
+		Private Shared USLocale As Locale
+	#tag EndProperty
+
+
+	#tag Constant, Name = kComma, Type = String, Dynamic = False, Default = \"\x2C", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kCommaAndSpace, Type = String, Dynamic = False, Default = \"\x2C ", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kCurlyBraceClose, Type = String, Dynamic = False, Default = \"}", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kCurlyBraceOpen, Type = String, Dynamic = False, Default = \"{", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kEqualsWithSpaces, Type = String, Dynamic = False, Default = \" \x3D ", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kFalse, Type = String, Dynamic = False, Default = \"false", Scope = Private
+	#tag EndConstant
 
 	#tag Constant, Name = kIndent, Type = String, Dynamic = False, Default = \"  ", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kQuote, Type = String, Dynamic = False, Default = \"\"", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kSpace, Type = String, Dynamic = False, Default = \" ", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kSquareBracketClose, Type = String, Dynamic = False, Default = \"]", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kSquareBracketOpen, Type = String, Dynamic = False, Default = \"[", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kTrue, Type = String, Dynamic = False, Default = \"true", Scope = Private
 	#tag EndConstant
 
 

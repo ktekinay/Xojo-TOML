@@ -85,6 +85,115 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub EmbeddedDictionaryTest()
+		  var d as new Dictionary
+		  var d1 as new Dictionary
+		  var d2 as new Dictionary
+		  
+		  d1.Value( "c" ) = 1
+		  d1.Value( "d" ) = 2
+		  
+		  d2.Value( "e" ) = false
+		  
+		  d1.Value( "b" ) = d2
+		  
+		  d.Value( "a" ) = d1
+		  d.Value( "z" ) = true
+		  
+		  var toml as string = GenerateTOML_MTC( d )
+		  Assert.AreSame kExpectedEmbeddedTOML, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub InlineArrayTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  if true then
+		    var arr() as boolean = array( true, false )
+		    d = new Dictionary
+		    d.Value( "a" ) = arr
+		    toml = GenerateTOML_MTC( d )
+		    Assert.AreSame "a = [ true, false, ]" + EndOfLine, toml
+		  end if
+		  
+		  if true then
+		    var arr() as integer = array( 1, 2 )
+		    d = new Dictionary
+		    d.Value( "a" ) = arr
+		    toml = GenerateTOML_MTC( d )
+		    Assert.AreSame "a = [ 1, 2, ]" + EndOfLine, toml
+		  end if
+		  
+		  if true then
+		    var arr() as integer = array( 1111, 22222 )
+		    d = new Dictionary
+		    d.Value( "a" ) = arr
+		    toml = GenerateTOML_MTC( d )
+		    Assert.AreSame "a = [ 1_111, 22_222, ]" + EndOfLine, toml
+		  end if
+		  
+		  if true then
+		    var arr() as string = array( "abc", "def""ge" )
+		    d = new Dictionary
+		    d.Value( "a" ) = arr
+		    toml = GenerateTOML_MTC( d )
+		    Assert.AreSame "a = [ ""abc"", ""def\""ge"", ]" + EndOfLine, toml
+		  end if
+		  
+		  if true then
+		    var arr() as double = array( 1.5, 6789.56 )
+		    d = new Dictionary
+		    d.Value( "a" ) = arr
+		    toml = GenerateTOML_MTC( d )
+		    Assert.AreSame "a = [ 1.5, 6_789.56, ]" + EndOfLine, toml
+		  end if
+		  
+		  if true then
+		    var arr() as variant = array( 1.5, true )
+		    d = new Dictionary
+		    d.Value( "a" ) = arr
+		    toml = GenerateTOML_MTC( d )
+		    Assert.AreSame "a = [ 1.5, true, ]" + EndOfLine, toml
+		  end if
+		  
+		  if true then
+		    var arr() as variant = array( 1.5, true, "string", 7 )
+		    d = new Dictionary
+		    d.Value( "a" ) = arr
+		    toml = GenerateTOML_MTC( d )
+		    var expected as string = String.FromArray( array( "a = [", "  1.5,", "  true,", "  ""string"",", "  7,", "]", "" ), EndOfLine )
+		    Assert.AreSame expected, toml
+		  end if
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub InlineTableTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  if true then
+		    var inline as new M_TOML.InlineDictionary
+		    inline.Value( "z" ) = 2
+		    inline.Value( "y" ) = 1
+		    
+		    d = new Dictionary
+		    d.Value( "a" ) = inline
+		    
+		    toml = GenerateTOML_MTC( d ).Trim
+		    if toml = "a = { z = 2, y = 1 }" or toml = "a = { y = 1, z = 2 }" then
+		      Assert.Pass
+		    else
+		      Assert.Fail toml, "Did not properly encode"
+		    end if
+		  end if
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub IntegerTest()
 		  var d as Dictionary
 		  var toml as string
@@ -136,6 +245,10 @@ Inherits TOMLTestGroupBase
 		  Assert.AreSame "a = ""a\u007Fb""" + EndOfLine, toml
 		End Sub
 	#tag EndMethod
+
+
+	#tag Constant, Name = kExpectedEmbeddedTOML, Type = String, Dynamic = False, Default = \"z \x3D true\n\n[a]\nc \x3D 1\nd \x3D 2\n\n[a.b]\ne \x3D false\n", Scope = Private
+	#tag EndConstant
 
 
 	#tag ViewBehavior
