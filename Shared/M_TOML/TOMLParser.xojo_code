@@ -393,7 +393,6 @@ Private Class TOMLParser
 		  end if
 		  
 		  var result as variant
-		  static gmt as new TimeZone( 0 )
 		  
 		  //
 		  // Get the string representation
