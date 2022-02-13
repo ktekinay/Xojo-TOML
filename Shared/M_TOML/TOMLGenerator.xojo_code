@@ -2,11 +2,18 @@
 Private Class TOMLGenerator
 	#tag Method, Flags = &h21
 		Private Sub AddKeyAndValue(key As String, value As Variant, toArr() As String = Nil)
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  if toArr = nil then
 		    toArr = OutputArr
 		  end if
 		  
-		  key = EncodeKey( key )
+		  key = ToBasicString( key, true )
 		  var valueString as string = EncodeValue( value )
 		  
 		  toArr.Add key
@@ -27,6 +34,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeArray(value As Variant) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var result() as string
 		  
 		  const kAddEOLThreshold as integer = 2
@@ -281,6 +295,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeDate(dt As Date) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var dateString as string = dt.SQLDateTime.Replace( kSpace, "T" )
 		  var gmt as double = dt.GMTOffset
 		  
@@ -316,6 +337,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeDateTime(dt As DateTime) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  //
 		  // Special case
 		  //
@@ -365,6 +393,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeDouble(value As Double) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var result as string
 		  
 		  var d as double = value
@@ -400,6 +435,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeInlineTable(d As Dictionary) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var result() as string
 		  
 		  result.Add kCurlyBraceOpen
@@ -428,33 +470,30 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeInteger(value As Integer) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var result as string = value.ToString( USLocale, "#,##0" )
-		  result = result.ReplaceAll( USLocale.GroupingSeparator, "_" )
+		  static groupingSep as string = USLocale.GroupingSeparator
+		  const kUnderscore as string = "_"
+		  result = result.ReplaceAllBytes( groupingSep, kUnderscore )
 		  return result
 		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Function EncodeKey(key As String) As String
-		  static rxValidChars as RegEx
-		  
-		  if rxValidChars is nil then
-		    rxValidChars = new RegEx
-		    rxValidChars.SearchPattern = "\A[a-z0-9\-_]+\z"
-		  end if
-		  
-		  if rxValidChars.Search( key ) isa RegExMatch then
-		    return key
-		  end if
-		  
-		  var encoded as string = ToBasicString( key )
-		  return encoded
-		  
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h21
 		Private Function EncodeLocalTime(lt As M_TOML.LocalTime) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  return lt.ToString
 		  
 		End Function
@@ -462,6 +501,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function EncodeValue(value As Variant) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var result as string
 		  
 		  if value.IsArray then
@@ -493,8 +539,6 @@ Private Class TOMLGenerator
 		    result = EncodeDateTime( value )
 		    
 		  case Variant.TypeObject
-		    #pragma warning "Finish encoding objects"
-		    
 		    if value isa Dictionary then
 		      result = EncodeInlineTable( value )
 		      
@@ -516,6 +560,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h0
 		Function Generate(d As Dictionary) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  CurrentLevel = 0
 		  ProcessDictionary( d )
 		  var result as string = String.FromArray( OutputArr, "" )
@@ -526,6 +577,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function IndentForLevel() As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  for level as integer = indents.Count to CurrentLevel
 		    indents.Add indents( level - 1 ) + kIndent
 		  next
@@ -536,6 +594,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Function IsDictionaryArray(value As Variant) As Boolean
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  if not value.IsArray then
 		    return false
 		  end if
@@ -564,6 +629,13 @@ Private Class TOMLGenerator
 
 	#tag Method, Flags = &h21
 		Private Sub ProcessDictionary(d As Dictionary)
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  //
 		  // The caller would have added the reference key for this Dictionary, if any
 		  //
@@ -605,16 +677,14 @@ Private Class TOMLGenerator
 		    var key as string = keys( i )
 		    var embeddedDict as Dictionary = values( i )
 		    
-		    key = EncodeKey( key )
+		    key = ToBasicString( key, true )
 		    KeyStack.Add key
 		    
 		    OutputArr.Add EndOfLine
 		    OutputArr.Add indent
-		    OutputArr.Add kSquareBracketOpen
-		    OutputArr.Add kSpace
+		    OutputArr.Add kSquareBracketOpenAndSpace
 		    OutputArr.Add String.FromArray( KeyStack, "." )
-		    OutputArr.Add kSpace
-		    OutputArr.Add kSquareBracketClose
+		    OutputArr.Add kSquareBracketCloseWithSpace
 		    OutputArr.Add EndOfLine
 		    
 		    CurrentLevel = CurrentLevel + 1
@@ -638,18 +708,14 @@ Private Class TOMLGenerator
 		    for each o as object in arr
 		      var arrayDict as Dictionary = Dictionary( o )
 		      
-		      key = EncodeKey( key )
+		      key = ToBasicString( key, true )
 		      KeyStack.Add key
 		      
 		      OutputArr.Add EndOfLine
 		      OutputArr.Add indent
-		      OutputArr.Add kSquareBracketOpen
-		      OutputArr.Add kSquareBracketOpen
-		      OutputArr.Add kSpace
+		      OutputArr.Add kSquareBracketOpenDoubleAndSpace
 		      OutputArr.Add String.FromArray( KeyStack, "." )
-		      OutputArr.Add kSpace
-		      OutputArr.Add kSquareBracketClose
-		      OutputArr.Add kSquareBracketClose
+		      OutputArr.Add kSquareBracketCloseDoubleWithSpace
 		      OutputArr.Add EndOfLine
 		      
 		      CurrentLevel = CurrentLevel + 1
@@ -665,7 +731,14 @@ Private Class TOMLGenerator
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Function ToBasicString(mbIn As MemoryBlock) As String
+		Private Function ToBasicString(mbIn As MemoryBlock, isKey As Boolean = False) As String
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
 		  var pIn as ptr = mbIn
 		  var lastByteIndex as integer = mbIn.Size - 1
 		  
@@ -687,48 +760,56 @@ Private Class TOMLGenerator
 		    
 		    select case thisByte
 		    case kByteBackslash
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      
 		    case kByteBackspace
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteLowB
 		      
 		    case kByteFormFeed
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteLowF
 		      
 		    case kByteLineFeed
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteLowN
 		      
 		    case kByteReturn
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteLowR
 		      
 		    case kByteTab
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteLowT
 		      
 		    case kByteQuoteDouble
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteQuoteDouble
 		      
 		    case is < 8, 11, 14 to 31
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
@@ -744,6 +825,7 @@ Private Class TOMLGenerator
 		      pOut.Byte( outByteIndex ) = hexValue.Asc
 		      
 		    case 127
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteBackslash
 		      outByteIndex = outByteIndex + 1
@@ -757,17 +839,28 @@ Private Class TOMLGenerator
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteCapF
 		      
+		    case kByteCapA to kByteCapZ, kByteLowA to kByteLowZ, kByteHyphen, kByteUnderscore // Valid key
+		      outByteIndex = outByteIndex + 1
+		      pOut.Byte( outByteIndex ) = thisByte
+		      
 		    case else
+		      isKey = false
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = thisByte
 		      
 		    end select
 		  next byteIndex
 		  
-		  outByteIndex = outByteIndex + 1
-		  pOut.Byte( outByteIndex ) = kByteQuoteDouble
+		  var startByte as integer
+		  if isKey then
+		    startByte = 1
+		  else
+		    startByte = 0
+		    outByteIndex = outByteIndex + 1
+		    pOut.Byte( outByteIndex ) = kByteQuoteDouble
+		  end if
 		  
-		  var result as string = StringEncoderMB.StringValue( 0, outByteIndex + 1, Encodings.UTF8 )
+		  var result as string = StringEncoderMB.StringValue( startByte, outByteIndex + 1 - startByte, Encodings.UTF8 )
 		  return result
 		  
 		End Function
@@ -829,7 +922,19 @@ Private Class TOMLGenerator
 	#tag Constant, Name = kSquareBracketClose, Type = String, Dynamic = False, Default = \"]", Scope = Private
 	#tag EndConstant
 
+	#tag Constant, Name = kSquareBracketCloseDoubleWithSpace, Type = String, Dynamic = False, Default = \" ]]", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kSquareBracketCloseWithSpace, Type = String, Dynamic = False, Default = \" ]", Scope = Private
+	#tag EndConstant
+
 	#tag Constant, Name = kSquareBracketOpen, Type = String, Dynamic = False, Default = \"[", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kSquareBracketOpenAndSpace, Type = String, Dynamic = False, Default = \"[ ", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kSquareBracketOpenDoubleAndSpace, Type = String, Dynamic = False, Default = \"[[ ", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kTrue, Type = String, Dynamic = False, Default = \"true", Scope = Private
