@@ -26,6 +26,12 @@ Protected Class LocalTime
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub Constructor(copyFrom As M_TOML.LocalTime)
+		  Constructor copyFrom.Hour, copyFrom.Minute, copyFrom.Second, copyFrom.Nanosecond
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Shared Function FromString(timeString As String) As M_TOML.LocalTime
 		  var match as RegExMatch = M_TOML.RxTimeString.Search( timeString )
 		  if match is nil then
@@ -37,8 +43,9 @@ Protected Class LocalTime
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Attributes( Hidden )  Function Operator_Convert() As DateTime
-		  return new DateTime( 0, 0, 0, Hour, Minute, Second, Nanosecond, nil )
+		Shared Function Now() As M_TOML.LocalTime
+		  var now as DateTime = DateTime.Now
+		  return new M_TOML.LocalTime( now.Hour, now.Minute, now.Second, now.Nanosecond )
 		End Function
 	#tag EndMethod
 
@@ -47,13 +54,6 @@ Protected Class LocalTime
 		  return ToString
 		  
 		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Attributes( Hidden )  Sub Operator_Convert(dt As DateTime)
-		  Constructor dt.Hour, dt.Minute, dt.Second, dt.Nanosecond
-		  
-		End Sub
 	#tag EndMethod
 
 
@@ -203,11 +203,51 @@ Protected Class LocalTime
 			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
-			Name="mHour"
+			Name="Hour"
 			Visible=false
 			Group="Behavior"
 			InitialValue=""
 			Type="Integer"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Minute"
+			Visible=false
+			Group="Behavior"
+			InitialValue=""
+			Type="Integer"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Nanosecond"
+			Visible=false
+			Group="Behavior"
+			InitialValue=""
+			Type="Integer"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Second"
+			Visible=false
+			Group="Behavior"
+			InitialValue=""
+			Type="Integer"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="SecondsFromMidnight"
+			Visible=false
+			Group="Behavior"
+			InitialValue=""
+			Type="Double"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="ToString"
+			Visible=false
+			Group="Behavior"
+			InitialValue=""
+			Type="String"
 			EditorType=""
 		#tag EndViewProperty
 	#tag EndViewBehavior

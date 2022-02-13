@@ -349,7 +349,29 @@ Inherits TOMLTestGroupBase
 		  toml = "a=1967-02-25"
 		  d = ParseTOML_MTC( toml )
 		  var dt as DateTime = d.Value( "a" )
+		  Assert.IsTrue dt isa M_TOML.LocalDateTime
 		  Assert.AreEqual "1967-02-25", dt.SQLDate
+		  Assert.AreEqual 0, dt.Hour
+		  Assert.AreEqual 0, dt.Minute
+		  Assert.AreEqual 0, dt.Second
+		  Assert.AreEqual 0, dt.Nanosecond
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub LocalDateTimeTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = "a=1967-02-25 01:02:03.5"
+		  d = ParseTOML_MTC( toml )
+		  var dt as DateTime = d.Value( "a" )
+		  Assert.IsTrue dt isa M_TOML.LocalDateTime
+		  Assert.AreEqual "1967-02-25", dt.SQLDate
+		  Assert.AreEqual 1, dt.Hour
+		  Assert.AreEqual 2, dt.Minute
+		  Assert.AreEqual 3, dt.Second
+		  Assert.AreEqual 500000000, dt.Nanosecond
 		End Sub
 	#tag EndMethod
 

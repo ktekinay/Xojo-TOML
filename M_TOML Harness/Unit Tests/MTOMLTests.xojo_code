@@ -27,6 +27,17 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub LocalDateTimeTest()
+		  var now as DateTime = DateTime.Now
+		  var ldt as M_TOML.LocalDateTime = now
+		  
+		  Assert.IsTrue ldt <> now
+		  Assert.AreEqual now.SQLDateTime, ldt.SQLDateTime
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub LocalTimeTest()
 		  var lt as M_TOML.LocalTime
 		  
@@ -50,6 +61,13 @@ Inherits TOMLTestGroupBase
 		  var s as string = "23:24:25.67"
 		  lt = M_TOML.LocalTime.FromString( s )
 		  Assert.AreEqual s, lt.ToString
+		  
+		  lt = M_TOML.LocalTime.Now
+		  var now as DateTime = DateTime.Now
+		  Assert.AreEqual now.Hour, lt.Hour
+		  Assert.AreEqual now.Minute, lt.Minute
+		  Assert.AreEqual now.Second, lt.Second
+		  Assert.IsTrue abs( now.Nanosecond - lt.Nanosecond ) < 1000000
 		End Sub
 	#tag EndMethod
 

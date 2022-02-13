@@ -416,7 +416,8 @@ Private Class TOMLParser
 		  //
 		  match = RxLocalDateString.Search( dateString )
 		  if match isa object then
-		    result = DateTime.FromString( dateString, nil, gmt )
+		    var ldt as M_TOML.LocalDateTime = M_TOML.LocalDateTime.FromString( dateString )
+		    result = ldt
 		    goto Success
 		  end if
 		  

@@ -47,6 +47,34 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub DateTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = new Date( 2021, 4, 5, 1, 2, 3, -5.5 )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 2021-04-05T01:02:03-05:30" + EndOfLine, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub DateTimeTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  var tz as new Timezone( -5.5 * 60.0 * 60.0 )
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = new DateTime( 2021, 4, 5, 1, 2, 3, 456000000, tz )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 2021-04-05T01:02:03.456-05:30" + EndOfLine, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub DoubleTest()
 		  var d as Dictionary
 		  var toml as string
@@ -248,6 +276,45 @@ Inherits TOMLTestGroupBase
 		  d.Value( "a" + &uA + "b" ) = 1
 		  toml = GenerateTOML_MTC( d )
 		  Assert.AreSame """a\nb"" = 1" + EndOfLine, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub LocalDateTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = new M_TOML.LocalDateTime( 2021, 4, 5 )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 2021-04-05" + EndOfLine, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub LocalDateTimeTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = new M_TOML.LocalDateTime( 2021, 4, 5, 1, 2, 3 )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 2021-04-05T01:02:03" + EndOfLine, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub LocalTimeTest()
+		  var d as Dictionary
+		  var toml as string
+		  
+		  d = new Dictionary
+		  d.Value( "a" ) = new M_TOML.LocalTime( 14, 2, 3 )
+		  toml = GenerateTOML_MTC( d )
+		  Assert.AreSame "a = 14:02:03" + EndOfLine, toml
 		  
 		End Sub
 	#tag EndMethod

@@ -280,6 +280,90 @@ Private Class TOMLGenerator
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Function EncodeDate(dt As Date) As String
+		  var dateString as string = dt.SQLDateTime.Replace( kSpace, "T" )
+		  var gmt as double = dt.GMTOffset
+		  
+		  if gmt = 0.0 then
+		    dateString = dateString + "Z"
+		    
+		  else
+		    
+		    if gmt > 0.0 then
+		      dateString = dateString + "+"
+		    else
+		      dateString = dateString + "-"
+		    end if
+		    
+		    gmt = abs( gmt )
+		    
+		    var hours as integer = gmt
+		    var fraction as double = gmt - hours
+		    var minutes as integer = fraction * 60.0
+		    if minutes = 60 then
+		      hours = hours + 1
+		      minutes = 0
+		    end if
+		    
+		    dateString = dateString + hours.ToString( "00" ) + ":" + minutes.ToString( "00" )
+		    
+		  end if
+		  
+		  return dateString
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function EncodeDateTime(dt As DateTime) As String
+		  //
+		  // Special case
+		  //
+		  if dt isa M_TOML.LocalDateTime and dt.Hour = 0 and dt.Minute = 0 and dt.Second = 0 and dt.Nanosecond = 0 then
+		    return dt.SQLDate
+		  end if
+		  
+		  var dateString as string = dt.SQLDateTime.Replace( kSpace, "T" )
+		  
+		  if dt.Nanosecond <> 0 then
+		    static loc as new Locale( "en-US" )
+		    
+		    var ns as integer = dt.Nanosecond
+		    var µs as integer = round( ( ns / 1000.0 ) + 0.5 )
+		    var dµs as double = µs / kMillion
+		    dateString = dateString + dµs.ToString( loc, ".0#####" )
+		  end if
+		  
+		  if not ( dt isa M_TOML.LocalDateTime ) then
+		    var tz as Timezone = dt.Timezone
+		    
+		    if tz.SecondsFromGMT = 0 then
+		      dateString = dateString + "Z"
+		      
+		    else
+		      var secsFromGMT as integer = tz.SecondsFromGMT
+		      
+		      if tz.SecondsFromGMT > 0 then
+		        dateString = dateString + "+"
+		      else
+		        secsFromGMT = -secsFromGMT
+		        dateString = dateString + "-"
+		      end if
+		      
+		      var minsFromGMT as integer = secsFromGMT \ 60
+		      var hoursFromGMT as integer = minsFromGMT \ 60
+		      minsFromGMT = minsFromGMT mod 60
+		      
+		      dateString = dateString + hoursFromGMT.ToString( "00" ) + ":" + minsFromGMT.ToString( "00" )
+		      
+		    end if
+		  end if
+		  
+		  return dateString
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function EncodeDouble(value As Double) As String
 		  var result as string
 		  
@@ -370,6 +454,13 @@ Private Class TOMLGenerator
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Function EncodeLocalTime(lt As M_TOML.LocalTime) As String
+		  return lt.ToString
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Function EncodeValue(value As Variant) As String
 		  var result as string
 		  
@@ -395,11 +486,21 @@ Private Class TOMLGenerator
 		  case Variant.TypeBoolean
 		    result = if( value.BooleanValue, kTrue, kFalse )
 		    
+		  case Variant.TypeDate
+		    result = EncodeDate( value )
+		    
+		  case Variant.TypeDateTime
+		    result = EncodeDateTime( value )
+		    
 		  case Variant.TypeObject
 		    #pragma warning "Finish encoding objects"
 		    
 		    if value isa Dictionary then
 		      result = EncodeInlineTable( value )
+		      
+		    elseif value isa M_TOML.LocalTime then
+		      result = EncodeLocalTime( value )
+		      
 		    end if
 		    
 		  case else

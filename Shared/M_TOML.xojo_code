@@ -44,7 +44,11 @@ Protected Module M_TOML
 		  static gmt as new TimeZone( 0 )
 		  var tz as TimeZone
 		  
+		  var hasTZ as boolean
+		  
 		  if match.SubExpressionCount = 9 then
+		    hasTZ = true
+		    
 		    var offsetTime as string = match.SubExpressionString( 8 )
 		    if offsetTime = "Z" then
 		      tz = gmt
@@ -57,7 +61,13 @@ Protected Module M_TOML
 		    end if
 		  end if
 		  
-		  var dt as new DateTime( year, month, day, hour, minute, second, ns, tz )
+		  var dt as DateTime
+		  if hasTZ then
+		    dt = new DateTime( year, month, day, hour, minute, second, ns, tz )
+		  else
+		    dt = new M_TOML.LocalDateTime( year, month, day, hour, minute, second, ns )
+		  end if
+		  
 		  return dt
 		  
 		End Function
