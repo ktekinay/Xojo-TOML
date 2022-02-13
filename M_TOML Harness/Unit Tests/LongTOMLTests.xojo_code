@@ -105,6 +105,13 @@ Inherits TOMLTestGroupBase
 		  var result as boolean = AreSameDictionaries( fromTOML, fromJSON )
 		  Assert.IsTrue result
 		  
+		  self.StartTestTimer( "Generate TOML" )
+		  var generated as string = GenerateTOML_MTC( fromJSON )
+		  self.LogTestTimer( "Generate TOML" )
+		  
+		  fromTOML = ParseTOML_MTC( generated )
+		  result = AreSameDictionaries( fromTOML, fromJSON )
+		  
 		  StopProfiling
 		End Sub
 	#tag EndMethod
