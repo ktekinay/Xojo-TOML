@@ -185,6 +185,11 @@ Inherits TOMLTestGroupBase
 		      Assert.IsTrue areSame, test.Name
 		      if not areSame then
 		        System.DebugLog "... " + test.TOMLFolderItem.NativePath
+		      else
+		        var generated as string = GenerateTOML_MTC( test.ExpectedDictionary )
+		        actual = ParseTOML_MTC( generated )
+		        areSame = AreSameDictionaries( actual, test.ExpectedDictionary )
+		        Assert.IsTrue areSame, test.Name + " (generate)"
 		      end if
 		      
 		    catch err as M_TOML.TOMLException
