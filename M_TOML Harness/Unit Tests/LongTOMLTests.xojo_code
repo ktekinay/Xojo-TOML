@@ -23,6 +23,7 @@ Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h21
 		Private Function AreSameDictionaries(d1 As Dictionary, d2 As Dictionary) As Boolean
 		  if d1.KeyCount <> d2.KeyCount then
+		    System.DebugLog "Key counts don't match!"
 		    return false
 		  end if
 		  
@@ -31,20 +32,29 @@ Inherits TOMLTestGroupBase
 		  var values1() as variant = d1.Values
 		  var values2() as variant = d2.Values
 		  
-		  keys1.SortWith values1
-		  keys2.SortWith values2
+		  var keysHex1() as string
+		  var keysHex2() as string
+		  for i as integer = 0 to keys1.LastIndex
+		    keysHex1.Add EncodeHex( keys1( i ) )
+		    keysHex2.Add EncodeHex( keys2( i ) )
+		  next
+		  
+		  keysHex1.SortWith keys1, values1
+		  keysHex2.SortWith keys2, values2
 		  
 		  for i as integer = 0 to keys1.LastIndex
 		    var k1 as string = keys1( i )
 		    var k2 as string = keys2( i )
 		    
 		    if StrComp( k1, k2, 0 ) <> 0 then
+		      System.DebugLog "Keys " + k1 + " != " + k2
 		      return false
 		    end if
 		    
 		    var val1 as variant = values1( i )
 		    var val2 as variant = values2( i )
 		    if not AreSameValues( val1, val2 ) then
+		      System.DebugLog "Key " + k1 + " does not have the same values"
 		      return false
 		    end if
 		  next
@@ -75,12 +85,25 @@ Inherits TOMLTestGroupBase
 		  elseif v1.IsArray and v2.IsArray then
 		    result = AreSameArrays( v1, v2 )
 		    
-		  elseif v1.Type = Variant.TypeObject then
-		    break
+		  elseif v1.Type = Variant.TypeDouble then
+		    if v1.DoubleValue.IsNotANumber and v2.DoubleValue.IsNotANumber then
+		      result = true
+		    elseif v1.DoubleValue.IsInfinite and v2.DoubleValue.IsInfinite then
+		      result = true
+		      
+		    else
+		      result = v1.DoubleValue.Equals( v2.DoubleValue, 1 )
+		      if result = false then
+		        System.DebugLog v1.DoubleValue.ToString + " != " + v2.DoubleValue.ToString
+		      end if
+		      
+		    end if
 		    
 		  else
 		    result = StrComp( v1.StringValue, v2.StringValue, 0 ) = 0
-		    
+		    if result = false then
+		      System.DebugLog v1.StringValue + " != " + v2.StringValue
+		    end if
 		  end if
 		  
 		  #if DebugBuild then
@@ -114,6 +137,61 @@ Inherits TOMLTestGroupBase
 		  result = AreSameDictionaries( fromTOML, fromJSON )
 		  
 		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub BurntSushiFolderToArray(folder As FolderItem, intoArr() As BurntSushiTest)
+		  var enclosedFolders() as FolderItem
+		  
+		  for each item as FolderItem in folder.Children( false )
+		    if item.IsFolder then
+		      enclosedFolders.Add item
+		    elseif item.Name.EndsWith( ".toml" ) then
+		      intoArr.Add new BurntSushiTest( item )
+		    end if
+		  next
+		  
+		  for each subfolder as FolderItem in enclosedFolders
+		    BurntSushiFolderToArray subfolder, intoArr
+		  next
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub BurntSushUnitTestsTest()
+		  //
+		  // Processes files from https://github.com/BurntSushi/toml-test
+		  //
+		  
+		  self.StopTestOnFail = true
+		  
+		  var parentFolder as FolderItem = SpecialFolder.Resource( "BurntSushiTests" )
+		  Assert.IsTrue parentFolder.Exists
+		  
+		  var validTests() as BurntSushiTest
+		  
+		  var validFolder as FolderItem = parentFolder.Child( "valid" )
+		  Assert.IsTrue validFolder.Exists
+		  BurntSushiFolderToArray validFolder, validTests
+		  
+		  self.StopTestOnFail = false
+		  
+		  for each test as BurntSushiTest in validTests
+		    try
+		      var actual as Dictionary = ParseTOML_MTC( test.TOML )
+		      var areSame as boolean = AreSameDictionaries( actual, test.ExpectedDictionary )
+		      Assert.IsTrue areSame, test.Name
+		      if not areSame then
+		        System.DebugLog "... " + test.TOMLFolderItem.NativePath
+		      end if
+		      
+		    catch err as M_TOML.TOMLException
+		      Assert.Fail test.Name, err.Message
+		      
+		    end try
+		  next
 		End Sub
 	#tag EndMethod
 

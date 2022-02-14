@@ -97,7 +97,7 @@ Protected Module M_TOML
 			  
 			  if rxDateTimeString is nil then
 			    rxDateTimeString = new RegEx
-			    rxDateTimeString.SearchPattern = "(?m-iUs)^(\d{4})-(\d{2})-(\d{2})[T\x20](\d{2}):(\d{2}):(\d{2})(\.\d{1,})?(Z|[-+]\d{2}:\d{2})?$"
+			    rxDateTimeString.SearchPattern = "(?mi-Us)^(\d{4})-(\d{2})-(\d{2})[T\x20](\d{2}):(\d{2}):(\d{2})(\.\d{1,})?(Z|[-+]\d{2}:\d{2})?$"
 			  end if
 			  
 			  return rxDateTimeString

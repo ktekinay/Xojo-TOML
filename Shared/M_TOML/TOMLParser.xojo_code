@@ -344,10 +344,10 @@ Private Class TOMLParser
 		      //
 		      // Numbers are ok
 		      //
-		    case kByteHyphen, kBytePlus, kByteCapZ, kByteColon, kByteDot
+		    case kByteHyphen, kBytePlus, kByteCapZ, kByteLowZ, kByteColon, kByteDot
 		      hasOtherChars = true
 		      
-		    case kByteSpace, kByteCapT // T is instead of a space
+		    case kByteSpace, kByteCapT, kByteLowT // T is instead of a space
 		      if hasSpace then
 		        exit while
 		      end if
@@ -355,7 +355,7 @@ Private Class TOMLParser
 		      hasSpace = true
 		      hasOtherChars = true
 		      
-		    case kByteSpace, kByteTab, kByteEOL
+		    case kByteSpace, kByteTab, kByteEOL, kByteHash, kByteComma
 		      if not hasOtherChars then
 		        //
 		        // Can't be a date or time
@@ -397,7 +397,7 @@ Private Class TOMLParser
 		  //
 		  // Get the string representation
 		  //
-		  var dateString as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen )
+		  var dateString as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen, Encodings.UTF8 ).Trim
 		  
 		  var match as RegExMatch
 		  
@@ -570,7 +570,7 @@ Private Class TOMLParser
 		    while byteIndex <= lastByteIndex
 		      var testByte as integer = p.Byte( testIndex )
 		      select case testByte
-		      case kByteZero to kByteNine
+		      case kByteZero to kByteNine, kByteUnderscore
 		        testIndex = testIndex + 1
 		      case else
 		        exit while
@@ -597,7 +597,7 @@ Private Class TOMLParser
 		    while byteIndex <= lastByteIndex
 		      thisByte = p.Byte( testIndex )
 		      select case thisByte
-		      case kByteZero to kByteNine
+		      case kByteZero to kByteNine, kByteUnderscore
 		        testIndex = testIndex + 1
 		      case else
 		        exit while
@@ -609,7 +609,8 @@ Private Class TOMLParser
 		  // Let's send it back
 		  //
 		  var stringLen as integer = testIndex - byteIndex
-		  var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen )
+		  var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen, Encodings.UTF8 )
+		  stringValue = stringValue.ReplaceAllBytes( "_", "" )
 		  byteIndex = testIndex
 		  
 		  value = stringValue.ToDouble
@@ -660,11 +661,20 @@ Private Class TOMLParser
 		  
 		  byteIndex = byteIndex + 1
 		  var d as Dictionary = new M_TOML.InlineDictionary
+		  
+		  //
+		  // See if it's an empty dictionary
+		  //
+		  SkipWhitespace p, lastByteIndex, byteIndex
+		  if p.Byte( byteIndex ) = kByteCurlyBraceClose then
+		    byteIndex = byteIndex + 1
+		    value = d
+		    return true
+		  end if
+		  
 		  var expectingComma as boolean
 		  
 		  while byteIndex <= lastByteIndex
-		    SkipWhitespace p, lastByteIndex, byteIndex
-		    
 		    if expectingComma then
 		      var thisByte as integer = p.Byte( byteIndex )
 		      select case thisByte
@@ -691,6 +701,8 @@ Private Class TOMLParser
 		      expectingComma = true
 		      
 		    end if
+		    
+		    SkipWhitespace p, lastByteIndex, byteIndex
 		  wend
 		  
 		  //
@@ -850,7 +862,8 @@ Private Class TOMLParser
 		      if not isMultiline then
 		        isDone = true
 		        byteIndex = byteIndex + 1
-		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteDouble and p.Byte( byteIndex + 2 ) = kByteQuoteDouble then
+		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteDouble and p.Byte( byteIndex + 2 ) = kByteQuoteDouble and _
+		        p.Byte( byteIndex + 3 ) <> kByteQuoteDouble then // If the next char is also a quote, keep going
 		        isDone =  true
 		        byteIndex = byteIndex + 3
 		      end if
@@ -858,7 +871,7 @@ Private Class TOMLParser
 		      if isDone then
 		        chunks.Add GetChunk( chunkStartIndex, chunkEndIndex )
 		        var result as string = String.FromArray( chunks, "" ).DefineEncoding( Encodings.UTF8 )
-		        return result.ReplaceLineEndings( EndOfLine )
+		        return result
 		      else
 		        byteIndex = byteIndex + 1
 		      end if
@@ -881,8 +894,23 @@ Private Class TOMLParser
 		          //
 		          // We are trimming this
 		          //
+		          
 		          byteIndex = testIndex
-		          SkipToNextRow p, lastByteIndex, byteIndex
+		          
+		          while byteIndex <= lastByteIndex
+		            SkipToNextRow p, lastByteIndex, byteIndex
+		            SkipWhitespace p, lastByteIndex, byteIndex
+		            
+		            select case p.Byte( byteIndex )
+		            case kByteEOL, kByteSpace, kByteTab
+		              // skip it
+		            case else
+		              exit while
+		            end select
+		            
+		            byteIndex = byteIndex + 1
+		          wend
+		          
 		          chunkStartIndex = byteIndex
 		          continue while
 		          
@@ -942,6 +970,7 @@ Private Class TOMLParser
 		      value = value * 2 + 1
 		    case kByteZero
 		      value = value * 2
+		    case kByteUnderscore
 		    case else
 		      exit while
 		    end select
@@ -974,6 +1003,7 @@ Private Class TOMLParser
 		      value = ( value * 16 ) + 10 + ( thisByte - kByteLowA )
 		    case kByteCapA to kByteCapF
 		      value = ( value * 16 ) + 10 + ( thisByte - kByteCapA )
+		    case kByteUnderscore
 		    case else
 		      exit while
 		    end select
@@ -1071,10 +1101,6 @@ Private Class TOMLParser
 		      //
 		      select case thisByte
 		      case kByteQuoteSingle, kByteQuoteDouble
-		        if p.Byte( byteIndex + 1 ) = thisByte then
-		          RaiseIllegalCharacterException byteIndex + 1
-		        end if
-		        
 		        if thisByte = kByteQuoteSingle then
 		          keys.Add ParseLiteralString( p, lastByteIndex, byteIndex )
 		        else
@@ -1187,9 +1213,6 @@ Private Class TOMLParser
 		    case kByteEOL
 		      SkipToNextRow p, lastByteIndex, byteIndex
 		      
-		    case kByteBackslash
-		      byteIndex = byteIndex + 1 // Skip the next character no matter what it is
-		      
 		    case kByteQuoteSingle
 		      var isDone as boolean
 		      var stringEndIndex as integer = byteIndex - 1
@@ -1197,7 +1220,8 @@ Private Class TOMLParser
 		      if not isMultiline then
 		        isDone = true
 		        byteIndex = byteIndex + 1
-		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteSingle and p.Byte( byteIndex + 2 ) = kByteQuoteSingle then
+		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteSingle and p.Byte( byteIndex + 2 ) = kByteQuoteSingle and _
+		        p.Byte( byteIndex + 3 ) <> kByteQuoteSingle then // If the next char is also a quote, keep going
 		        isDone = true
 		        byteIndex = byteIndex + 3
 		      end if
@@ -1300,6 +1324,15 @@ Private Class TOMLParser
 		    MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
 		    
 		    //
+		    // Check the keys
+		    //
+		    for each key as string in keys
+		      if key = "" then
+		        RaiseIllegalKeyException
+		      end if
+		    next
+		    
+		    //
 		    // Let's set the keys
 		    //
 		    CurrentDictionary = BaseDictionary
@@ -1377,6 +1410,7 @@ Private Class TOMLParser
 		    select case thisByte
 		    case kByteZero to kByteSeven
 		      value = ( value * 8 ) + ( thisByte - kByteZero )
+		    case kByteUnderscore
 		    case else
 		      exit while
 		    end select
@@ -1471,6 +1505,7 @@ Private Class TOMLParser
 		    if p.Byte( byteIndex ) = kByteEOL then
 		      byteIndex = byteIndex + 1 // Go to start of next row
 		      RowStartByteIndex = byteIndex
+		      RowNumber = RowNumber + 1
 		      return
 		    end if
 		    

@@ -81,7 +81,7 @@ Inherits TOMLTestGroupBase
 		  toml = "a=""\r \n\f\\\u0020\U00000020"""
 		  d = ParseTOML_MTC( toml )
 		  var actual as string = d.Value( "a" )
-		  var expected as string = EndOfLine + " " + EndOfLine + &u0C + "\  "
+		  var expected as string = &u0D + " " + &u0A + &u0C + "\  "
 		  Assert.AreEqual EncodeHex( expected, true ), EncodeHex( actual, true )
 		  
 		End Sub
@@ -202,6 +202,12 @@ Inherits TOMLTestGroupBase
 		  dt = d.Value( "a" )
 		  Assert.AreEqual 7 * 60 * 60 , dt.Timezone.SecondsFromGMT
 		  
+		  dateString = "1979-05-27T07:32:00-08:00#First class dates"
+		  toml = "a=" + DateString
+		  d = ParseTOML_MTC( toml )
+		  dt = d.Value( "a" )
+		  Assert.AreEqual DateString.Replace( "T", " " ).Left( dt.SQLDateTime.Length ), dt.SQLDateTime
+		  
 		End Sub
 	#tag EndMethod
 
@@ -221,16 +227,36 @@ Inherits TOMLTestGroupBase
 		  "-3.4", _
 		  "3.4e5", _
 		  "5.66E3", _
-		  "-0.45E-9" _
+		  "-0.45E-9", _
+		  "3_141.5927", _
+		  "3141.592_7", _
+		  "3e1_4" _
 		  )
 		  
 		  for each item as string in actual
 		    toml = "key1 = " + item
 		    d = ParseTOML_MTC( toml )
-		    Assert.IsTrue item.ToDouble.Equals( d.Value( "key1" ).DoubleValue )
+		    var dbl as double = item.ReplaceAll( "_", "" ).ToDouble
+		    var areEqual as boolean = item.ReplaceAll( "_", "" ).ToDouble.Equals( d.Value( "key1" ).DoubleValue, 1 )
+		    Assert.IsTrue areEqual, item
+		    if not areEqual then
+		      call ParseTOML_MTC( toml ) // A place to break
+		    end if
 		  next
 		  
 		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub EmptyKeyTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = """""="""""
+		  d = ParseTOML_MTC( toml )
+		  Assert.IsTrue d.HasKey( "" )
+		  Assert.AreEqual "", d.Value( "" ).StringValue
 		End Sub
 	#tag EndMethod
 
@@ -342,11 +368,32 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub LiteralStringTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  toml = "a='abc\'"
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual "abc\", d.Value( "a" ).StringValue
+		  
+		  toml = JoinString( "a='''", "abc\'''" )
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual "abc\", d.Value( "a" ).StringValue
+		  
+		  toml = "a='''a''b'''"
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual "a''b", d.Value( "a" ).StringValue
+		  
+		  toml = "a='''''b'''''"
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub LocalDateTest()
 		  var toml as string
 		  var d as Dictionary
 		  
-		  toml = "a=1967-02-25"
+		  toml = "a=1967-02-25 # comment"
 		  d = ParseTOML_MTC( toml )
 		  var dt as DateTime = d.Value( "a" )
 		  Assert.IsTrue dt isa M_TOML.LocalDateTime
@@ -398,6 +445,27 @@ Inherits TOMLTestGroupBase
 		  toml = JoinString( "key1 = '''", "The quick '' \", "brown fox'''" )
 		  d = ParseTOML_MTC( toml )
 		  Assert.AreEqual "The quick '' \" + EndOfLine + "brown fox", d.Value( "key1" ).StringValue
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub NestedInlineTableTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  self.StopTestOnFail = true
+		  
+		  toml = "a = [ { b = {} } ]"
+		  d = ParseTOML_MTC( toml )
+		  var value as variant = d.Value( "a" )
+		  Assert.IsTrue value.IsArray
+		  var arr() as variant = value
+		  var arrCount as integer = arr.Count
+		  Assert.AreEqual 1, arrCount
+		  d = arr( 0 )
+		  Assert.AreEqual 1, d.KeyCount
+		  d = d.Value( "b" )
+		  Assert.AreEqual 0, d.KeyCount
 		End Sub
 	#tag EndMethod
 
