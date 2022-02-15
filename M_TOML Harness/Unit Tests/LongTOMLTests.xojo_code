@@ -160,36 +160,63 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Sub BurntSushUnitTestsTest()
+		Sub BurntSushInvalidUnitTestsTest()
 		  //
 		  // Processes files from https://github.com/BurntSushi/toml-test
 		  //
 		  
-		  self.StopTestOnFail = true
+		  var invalidTests() as BurntSushiTest = GetBurntSushiTests( "invalid" )
 		  
-		  var parentFolder as FolderItem = SpecialFolder.Resource( "BurntSushiTests" )
-		  Assert.IsTrue parentFolder.Exists
+		  for each test as BurntSushiTest in invalidTests
+		    var name as string = test.Name
+		    #pragma unused name
+		    var path as string = test.TOMLFolderItem.NativePath
+		    
+		    #pragma BreakOnExceptions false
+		    try
+		      call ParseTOML_MTC( test.TOML )
+		      Assert.Fail name + " in " + path.ReplaceAll( test.TOMLFolderItem.Name, "" )
+		      
+		    catch err as M_TOML.TOMLException
+		      Assert.Pass "PASS: " + err.Message
+		      
+		    catch err as RuntimeException
+		      Assert.Pass "PASS: " + err.Message
+		      
+		    end try
+		    #pragma BreakOnExceptions default
+		  next
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub BurntSushValidUnitTestsTest()
+		  //
+		  // Processes files from https://github.com/BurntSushi/toml-test
+		  //
 		  
-		  var validTests() as BurntSushiTest
-		  
-		  var validFolder as FolderItem = parentFolder.Child( "valid" )
-		  Assert.IsTrue validFolder.Exists
-		  BurntSushiFolderToArray validFolder, validTests
-		  
-		  self.StopTestOnFail = false
+		  var validTests() as BurntSushiTest = GetBurntSushiTests( "valid" )
 		  
 		  for each test as BurntSushiTest in validTests
+		    var name as string = test.Name
+		    #pragma unused name
+		    var path as string = test.TOMLFolderItem.NativePath
+		    
 		    try
 		      var actual as Dictionary = ParseTOML_MTC( test.TOML )
 		      var areSame as boolean = AreSameDictionaries( actual, test.ExpectedDictionary )
 		      Assert.IsTrue areSame, test.Name
 		      if not areSame then
-		        System.DebugLog "... " + test.TOMLFolderItem.NativePath
+		        System.DebugLog "... " + path
 		      else
-		        var generated as string = GenerateTOML_MTC( test.ExpectedDictionary )
+		        var generated as string = GenerateTOML_MTC( actual )
 		        actual = ParseTOML_MTC( generated )
 		        areSame = AreSameDictionaries( actual, test.ExpectedDictionary )
 		        Assert.IsTrue areSame, test.Name + " (generate)"
+		        if not areSame then
+		          System.DebugLog "... (generated) " + path
+		          call GenerateTOML_MTC( actual )
+		        end if
 		      end if
 		      
 		    catch err as M_TOML.TOMLException
@@ -198,6 +225,26 @@ Inherits TOMLTestGroupBase
 		    end try
 		  next
 		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Function GetBurntSushiTests(folderName As String) As BurntSushiTest()
+		  self.StopTestOnFail = true
+		  
+		  var parentFolder as FolderItem = SpecialFolder.Resource( "BurntSushiTests" )
+		  Assert.IsTrue parentFolder.Exists
+		  
+		  var tests() as BurntSushiTest
+		  
+		  var validFolder as FolderItem = parentFolder.Child( folderName )
+		  Assert.IsTrue validFolder.Exists
+		  BurntSushiFolderToArray validFolder, tests
+		  
+		  self.StopTestOnFail = false
+		  
+		  return tests
+		  
+		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h21

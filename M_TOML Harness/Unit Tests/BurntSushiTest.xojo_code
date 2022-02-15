@@ -10,17 +10,21 @@ Protected Class BurntSushiTest
 		    TOMLFolderItem = f.Parent.Child( f.Name.Replace( ".json", ".toml" ) )
 		  end if
 		  
-		  if TOMLFolderItem is nil or not ( TOMLFolderItem.Exists and JSONFolderItem.Exists ) then
+		  if TOMLFolderItem is nil or not TOMLFolderItem.Exists then
 		    raise new InvalidArgumentException
 		  end if
 		  
+		  if JSONFolderItem isa object and not JSONFolderItem.Exists then
+		    JSONFolderItem = nil
+		    
+		  elseif JSONFolderItem isa object then
+		    var json as string = TextFileContents( JSONFolderItem )
+		    ExpectedDictionary = ParseJSON( json )
+		    ExpectedDictionary = FixDictionary( ExpectedDictionary )
+		    
+		  end if
+		  
 		  Name = TOMLFolderItem.Name.Left( TOMLFolderItem.Name.Length - 5 )
-		  
-		  var json as string = TextFileContents( JSONFolderItem )
-		  ExpectedDictionary = ParseJSON( json )
-		  
-		  ExpectedDictionary = FixDictionary( ExpectedDictionary )
-		  
 		  TOML = TextFileContents( TOMLFolderItem )
 		  
 		End Sub
