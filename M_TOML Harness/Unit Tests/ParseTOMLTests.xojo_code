@@ -236,7 +236,6 @@ Inherits TOMLTestGroupBase
 		  for each item as string in actual
 		    toml = "key1 = " + item
 		    d = ParseTOML_MTC( toml )
-		    var dbl as double = item.ReplaceAll( "_", "" ).ToDouble
 		    var areEqual as boolean = item.ReplaceAll( "_", "" ).ToDouble.Equals( d.Value( "key1" ).DoubleValue, 1 )
 		    Assert.IsTrue areEqual, item
 		    if not areEqual then

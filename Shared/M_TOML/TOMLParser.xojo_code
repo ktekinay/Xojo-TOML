@@ -107,7 +107,7 @@ Private Class TOMLParser
 		  end select
 		  
 		  //
-		  // If we get here, but be \u or \U
+		  // If we get here, must be \u or \U
 		  //
 		  
 		  var requiredBytes as integer
@@ -146,6 +146,11 @@ Private Class TOMLParser
 		    
 		    byteIndex = byteIndex + 1
 		  next
+		  
+		  var ucode as UInt64 = code
+		  if uCode >= &hFFFFFFFE then
+		    RaiseException "Invalid Unicode sequence on row " + RowNumber.ToString
+		  end if
 		  
 		  return Encodings.UTF8.Chr( code )
 		  
@@ -790,11 +795,16 @@ Private Class TOMLParser
 		  var dict as Dictionary = ParseJSON( "{}" )
 		  BaseDictionary = dict
 		  CurrentDictionary = dict
+		  DefinedTables = ParseJSON( "{}" )
 		  
 		  if toml.Encoding is nil then
 		    toml = toml.DefineEncoding( Encodings.UTF8 )
 		  elseif toml.Encoding <> Encodings.UTF8 then
 		    toml = toml.ConvertEncoding( Encodings.UTF8 )
+		  end if
+		  
+		  if not Encodings.UTF8.IsValidData( toml ) then
+		    RaiseException "Invalid UTF-8"
 		  end if
 		  
 		  toml = toml.Trim.ReplaceLineEndings( Encodings.UTF8.Chr( kByteEOL ) )
@@ -875,6 +885,13 @@ Private Class TOMLParser
 		      else
 		        byteIndex = byteIndex + 1
 		      end if
+		      
+		    case kByteEOL
+		      if not isMultiline then
+		        RaiseUnexpectedEndOfDataException
+		      end if
+		      
+		      byteIndex = byteIndex + 1
 		      
 		    case kByteBackslash
 		      chunks.Add GetChunk( chunkStartIndex, byteIndex - 1 )
@@ -1101,6 +1118,17 @@ Private Class TOMLParser
 		      //
 		      select case thisByte
 		      case kByteQuoteSingle, kByteQuoteDouble
+		        if byteIndex <> keyStart then
+		          RaiseException "Invalid quoting on row " + RowNumber.ToString 
+		        end if
+		        
+		        //
+		        // Make sure it's not a multiline
+		        //
+		        if p.Byte( byteIndex + 1 ) = thisByte and p.Byte( byteIndex + 2 ) = thisByte then
+		          RaiseException "Multiline keys are not allowed on row  " + RowNumber.ToString
+		        end if
+		        
 		        if thisByte = kByteQuoteSingle then
 		          keys.Add ParseLiteralString( p, lastByteIndex, byteIndex )
 		        else
@@ -1316,7 +1344,11 @@ Private Class TOMLParser
 		      isDictionaryHeader = true
 		      
 		      keys = ParseKeys( p, lastByteIndex, byteIndex )
-		      
+		      var sectionKey as string = String.FromArray( keys, "." )
+		      if DefinedTables.HasKey( sectionKey ) then
+		        RaiseException "Redefining a table on row " + RowNumber.ToString
+		      end if
+		      DefinedTables.Value( sectionKey ) = nil
 		    end if
 		    
 		    MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteSquareBracketClose
@@ -1342,7 +1374,9 @@ Private Class TOMLParser
 		      lastKey = keys.Pop
 		    end if
 		    
-		    for each key as string in keys
+		    for i as integer = 0 to keys.LastIndex
+		      var key as string = keys( i )
+		      
 		      var keyDict as Dictionary
 		      if not CurrentDictionary.HasKey( key ) then
 		        keyDict = ParseJSON( "{}" )
@@ -1353,6 +1387,9 @@ Private Class TOMLParser
 		        if value.IsArray and value.ArrayElementType = Variant.TypeObject and IsDictionaryArray( value ) then
 		          var arr() as variant = value
 		          keyDict = arr( arr.LastIndex )
+		          
+		        elseif value isa M_TOML.InlineDictionary then
+		          RaiseDuplicateKeyException key
 		          
 		        elseif value isa Dictionary then
 		          keyDict = value
@@ -1543,6 +1580,10 @@ Private Class TOMLParser
 
 	#tag Property, Flags = &h21
 		Private CurrentDictionary As Dictionary
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private DefinedTables As Dictionary
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
