@@ -819,10 +819,18 @@ Private Class TOMLGenerator
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteZero
 		      outByteIndex = outByteIndex + 1
-		      pOut.Byte( outByteIndex ) = kByteZero
+		      if thisByte >= 16 then
+		        pOut.Byte( outByteIndex ) = kByteOne
+		      else
+		        pOut.Byte( outByteIndex ) = kByteZero
+		      end if
 		      outByteIndex = outByteIndex + 1
-		      var hexValue as string = thisByte.ToHex
-		      pOut.Byte( outByteIndex ) = hexValue.Asc
+		      var thisByteMod as integer = thisByte mod 16
+		      if thisByteMod < 10 then
+		        pOut.Byte( outByteIndex ) = thisByteMod + kByteZero
+		      else
+		        pOut.Byte( outByteIndex ) = thisByteMod - 10 + kByteCapA
+		      end if
 		      
 		    case 127
 		      isKey = false
@@ -839,7 +847,7 @@ Private Class TOMLGenerator
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = kByteCapF
 		      
-		    case kByteCapA to kByteCapZ, kByteLowA to kByteLowZ, kByteHyphen, kByteUnderscore // Valid key
+		    case kByteCapA to kByteCapZ, kByteLowA to kByteLowZ, kByteZero to kByteNine, kByteHyphen, kByteUnderscore // Valid key
 		      outByteIndex = outByteIndex + 1
 		      pOut.Byte( outByteIndex ) = thisByte
 		      
@@ -860,9 +868,13 @@ Private Class TOMLGenerator
 		    pOut.Byte( outByteIndex ) = kByteQuoteDouble
 		  end if
 		  
-		  var result as string = StringEncoderMB.StringValue( startByte, outByteIndex + 1 - startByte, Encodings.UTF8 )
-		  return result
-		  
+		  var stringLength as integer = outByteIndex + 1 - startByte
+		  if stringLength = 0 then
+		    return kQuote + kQuote
+		  else
+		    var result as string = StringEncoderMB.StringValue( startByte, outByteIndex + 1 - startByte, Encodings.UTF8 )
+		    return result
+		  end if
 		End Function
 	#tag EndMethod
 
