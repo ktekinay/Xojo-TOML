@@ -1,7 +1,7 @@
 #tag Class
 Private Class TOMLGenerator
 	#tag Method, Flags = &h21
-		Private Sub AddKeyAndValue(key As String, value As Variant, toArr() As String = Nil)
+		Private Sub AddKeyAndValue(key As String, value As Variant, hasSectionHeader As Boolean, toArr() As String = Nil)
 		  #if not DebugBuild then
 		    #pragma BackgroundTasks false
 		    #pragma BoundsChecking false
@@ -14,6 +14,10 @@ Private Class TOMLGenerator
 		  end if
 		  
 		  key = ToBasicString( key, true )
+		  if not hasSectionHeader and KeyStack.Count <> 0 then
+		    key = String.FromArray( KeyStack, "." ) + "." + key
+		  end if
+		  
 		  var valueString as string = EncodeValue( value )
 		  
 		  toArr.Add key
@@ -455,7 +459,7 @@ Private Class TOMLGenerator
 		      var key as string = keys( i )
 		      var value as variant = values( i )
 		      
-		      AddKeyAndValue key, value, result
+		      AddKeyAndValue key, value, true, result
 		      if i <> keys.LastIndex then
 		        result.Add kCommaAndSpace
 		      end if
@@ -568,7 +572,7 @@ Private Class TOMLGenerator
 		  #endif
 		  
 		  CurrentLevel = 0
-		  ProcessDictionary( d )
+		  ProcessDictionary( d, false )
 		  var result as string = String.FromArray( OutputArr, "" )
 		  return result
 		  
@@ -628,7 +632,7 @@ Private Class TOMLGenerator
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub ProcessDictionary(d As Dictionary)
+		Private Sub ProcessDictionary(d As Dictionary, hasSectionHeader As Boolean)
 		  #if not DebugBuild then
 		    #pragma BackgroundTasks false
 		    #pragma BoundsChecking false
@@ -642,8 +646,8 @@ Private Class TOMLGenerator
 		  
 		  var indent as string = IndentForLevel
 		  
-		  var dictionaryKeys as new Dictionary
-		  var arrayKeys as new Dictionary
+		  var dictionaryKeys as Dictionary = ParseJSON( "{}" )
+		  var arrayKeys as Dictionary = ParseJSON( "{}" )
 		  
 		  var keys() as variant = d.Keys
 		  var values() as variant = d.Values
@@ -660,7 +664,7 @@ Private Class TOMLGenerator
 		      
 		    else
 		      OutputArr.Add indent
-		      AddKeyAndValue key, value
+		      AddKeyAndValue key, value, hasSectionHeader
 		      OutputArr.Add EndOfLine
 		      
 		    end if
@@ -680,16 +684,27 @@ Private Class TOMLGenerator
 		    key = ToBasicString( key, true )
 		    KeyStack.Add key
 		    
-		    OutputArr.Add EndOfLine
-		    OutputArr.Add indent
-		    OutputArr.Add kSquareBracketOpenAndSpace
-		    OutputArr.Add String.FromArray( KeyStack, "." )
-		    OutputArr.Add kSquareBracketCloseWithSpace
-		    OutputArr.Add EndOfLine
+		    //
+		    // If this dictionay has a single other Dictionary, we can add the header as dots later
+		    //
+		    var skipSectionHeader as boolean = embeddedDict.KeyCount = 1
 		    
-		    CurrentLevel = CurrentLevel + 1
-		    ProcessDictionary embeddedDict
-		    CurrentLevel = CurrentLevel -1
+		    if not skipSectionHeader then
+		      OutputArr.Add EndOfLine
+		      OutputArr.Add indent
+		      OutputArr.Add kSquareBracketOpenAndSpace
+		      OutputArr.Add String.FromArray( KeyStack, "." )
+		      OutputArr.Add kSquareBracketCloseWithSpace
+		      OutputArr.Add EndOfLine
+		      
+		      CurrentLevel = CurrentLevel + 1
+		    end if
+		    
+		    ProcessDictionary embeddedDict, not skipSectionHeader
+		    
+		    if not skipSectionHeader then
+		      CurrentLevel = CurrentLevel - 1
+		    end if
 		    
 		    call KeyStack.Pop
 		  next
@@ -719,7 +734,7 @@ Private Class TOMLGenerator
 		      OutputArr.Add EndOfLine
 		      
 		      CurrentLevel = CurrentLevel + 1
-		      ProcessDictionary arrayDict
+		      ProcessDictionary arrayDict, true
 		      CurrentLevel = CurrentLevel -1
 		      
 		      call KeyStack.Pop
