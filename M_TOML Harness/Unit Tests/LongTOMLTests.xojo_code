@@ -211,6 +211,7 @@ Inherits TOMLTestGroupBase
 		      Assert.IsTrue areSame, name + " in " + path + " (generate)"
 		      if not areSame then
 		        System.DebugLog "... (generated) " + path
+		        call AreSameDictionaries( parsed, expected )
 		        call GenerateTOML_MTC( parsed )
 		      end if
 		      

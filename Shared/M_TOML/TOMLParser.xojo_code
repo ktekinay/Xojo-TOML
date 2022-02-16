@@ -642,9 +642,15 @@ Private Class TOMLParser
 		      thisByte = p.Byte( testIndex )
 		    end if
 		    
+		    var allDone as boolean
+		    
 		    if thisByte = kByteZero then
 		      var nextByte as integer = p.Byte( testIndex + 1 )
-		      if nextByte >= kByteZero and nextByte <= kByteNine then
+		      if nextByte = kByteZero then
+		        testIndex = testIndex + 2
+		        allDone = true
+		        
+		      elseif nextByte > kByteZero and nextByte <= kByteNine then
 		        RaiseIllegalCharacterException testIndex
 		      end if
 		      
@@ -653,18 +659,20 @@ Private Class TOMLParser
 		      
 		    end if
 		    
-		    while byteIndex <= lastByteIndex
-		      thisByte = p.Byte( testIndex )
-		      select case thisByte
-		      case kByteZero to kByteNine
-		        testIndex = testIndex + 1
-		      case kByteUnderscore
-		        testIndex = testIndex + 1
-		        MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex
-		      case else
-		        exit while
-		      end select
-		    wend
+		    if not allDone then
+		      while byteIndex <= lastByteIndex
+		        thisByte = p.Byte( testIndex )
+		        select case thisByte
+		        case kByteZero to kByteNine
+		          testIndex = testIndex + 1
+		        case kByteUnderscore
+		          testIndex = testIndex + 1
+		          MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex
+		        case else
+		          exit while
+		        end select
+		      wend
+		    end if
 		  end if
 		  
 		  //

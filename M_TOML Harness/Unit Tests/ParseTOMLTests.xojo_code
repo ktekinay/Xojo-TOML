@@ -217,6 +217,7 @@ Inherits TOMLTestGroupBase
 		  "+0.0", _
 		  "-0.0", _
 		  "0e0", _
+		  "0e00", _
 		  "+0e0", _
 		  "-0e0", _
 		  "+0e-0", _

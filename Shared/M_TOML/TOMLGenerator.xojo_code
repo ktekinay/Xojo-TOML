@@ -642,8 +642,8 @@ Private Class TOMLGenerator
 		  
 		  var indent as string = IndentForLevel
 		  
-		  var dictionaryKeys as new Dictionary
-		  var arrayKeys as new Dictionary
+		  var dictionaryKeys as Dictionary = ParseJSON( "{}" )
+		  var arrayKeys as Dictionary = ParseJSON( "{}" )
 		  
 		  var keys() as variant = d.Keys
 		  var values() as variant = d.Values
