@@ -503,7 +503,7 @@ Private Class TOMLParser
 		    end select
 		    
 		    if not keepGoing then
-		      MaybeRaiseInvalidUnderscoreException p, byteIndex - 1, lastByteIndex
+		      MaybeRaiseInvalidUnderscoreException p, lastByteIndex, byteIndex - 1
 		      
 		      if byteIndex = valueStartIndex then
 		        RaiseIllegalCharacterException byteIndex
@@ -576,14 +576,14 @@ Private Class TOMLParser
 		    select case p.Byte( testIndex )
 		    case kByteUnderscore
 		      testIndex = testIndex + 1
-		      MaybeRaiseInvalidUnderscoreException p, testIndex, lastByteIndex
+		      MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex
 		    case kByteZero to kByteNine
 		      testIndex = testIndex + 1
 		    case kByteDot, kByteLowE, kByteCapE
 		      //
 		      // Onto the next part
 		      //
-		      MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
+		      MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex - 1
 		      exit do
 		      
 		    case else
@@ -592,7 +592,7 @@ Private Class TOMLParser
 		        return false
 		      end if
 		      
-		      MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
+		      MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex - 1
 		      
 		      var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen )
 		      value = stringValue.ReplaceAll( "_", "" ).ToInteger
@@ -621,14 +621,14 @@ Private Class TOMLParser
 		        testIndex = testIndex + 1
 		      case kByteUnderscore
 		        testIndex = testIndex + 1
-		        MaybeRaiseInvalidUnderscoreException p, testIndex, lastByteIndex
+		        MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex
 		      case else
 		        exit while
 		      end select
 		    wend
 		  end if
 		  
-		  MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
+		  MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex - 1
 		  
 		  //
 		  // E?
@@ -660,7 +660,7 @@ Private Class TOMLParser
 		        testIndex = testIndex + 1
 		      case kByteUnderscore
 		        testIndex = testIndex + 1
-		        MaybeRaiseInvalidUnderscoreException p, testIndex, lastByteIndex
+		        MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex
 		      case else
 		        exit while
 		      end select
@@ -670,7 +670,7 @@ Private Class TOMLParser
 		  //
 		  // Let's send it back
 		  //
-		  MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
+		  MaybeRaiseInvalidUnderscoreException p, lastByteIndex, testIndex - 1
 		  
 		  var stringLen as integer = testIndex - byteIndex
 		  var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen, Encodings.UTF8 )
@@ -804,7 +804,7 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub MaybeRaiseInvalidUnderscoreException(p As Ptr, byteIndex As Integer, lastByteIndex As Integer)
+		Private Sub MaybeRaiseInvalidUnderscoreException(p As Ptr, lastByteIndex As Integer, byteIndex As Integer)
 		  if byteIndex >= 0 and byteIndex <= lastByteIndex and p.Byte( byteIndex ) = kByteUnderscore then
 		    RaiseException "An underscore cannot be the first or last number character in row " + RowNumber.ToString
 		  end if
@@ -824,11 +824,7 @@ Private Class TOMLParser
 		  MaybeRaiseUnexpectedEOLException p, lastByteIndex, byteIndex
 		  
 		  if p.Byte( byteIndex ) <> expectedByte then
-		    var col as integer = byteIndex - RowStartByteIndex + 1
-		    var msg as string = "Error on row " + RowNumber.ToString + ", column " + col.ToString + _
-		    ": Expected '" + Encodings.UTF8.Chr( expectedByte ) + _
-		    "' but found '" + Encodings.UTF8.Chr( p.Byte( byteIndex ) ) +"'"
-		    RaiseException msg
+		    RaiseUnexpectedCharException p, lastByteIndex, byteIndex, expectedByte
 		  end if
 		End Sub
 	#tag EndMethod
@@ -1050,7 +1046,7 @@ Private Class TOMLParser
 		    #pragma StackOverflowChecking false
 		  #endif
 		  
-		  MaybeRaiseInvalidUnderscoreException p, byteIndex, lastByteIndex
+		  MaybeRaiseInvalidUnderscoreException p, lastByteIndex, byteIndex
 		  
 		  var value as integer
 		  
@@ -1061,7 +1057,7 @@ Private Class TOMLParser
 		    case kByteZero
 		      value = value * 2
 		    case kByteUnderscore
-		      MaybeRaiseInvalidUnderscoreException p, byteIndex + 1, lastByteIndex
+		      MaybeRaiseInvalidUnderscoreException p, lastByteIndex, byteIndex + 1
 		    case else
 		      exit while
 		    end select
@@ -1082,7 +1078,7 @@ Private Class TOMLParser
 		    #pragma StackOverflowChecking false
 		  #endif
 		  
-		  MaybeRaiseInvalidUnderscoreException p, byteIndex, lastByteIndex
+		  MaybeRaiseInvalidUnderscoreException p, lastByteIndex, byteIndex
 		  
 		  var value as integer
 		  
@@ -1097,7 +1093,7 @@ Private Class TOMLParser
 		    case kByteCapA to kByteCapF
 		      value = ( value * 16 ) + 10 + ( thisByte - kByteCapA )
 		    case kByteUnderscore
-		      MaybeRaiseInvalidUnderscoreException p, byteIndex + 1, lastByteIndex
+		      MaybeRaiseInvalidUnderscoreException p, lastByteIndex, byteIndex + 1
 		    case else
 		      exit while
 		    end select
@@ -1140,10 +1136,14 @@ Private Class TOMLParser
 		      thisDict = ParseJSON( "{}" )
 		      dict.Value( key ) = thisDict
 		      dict = thisDict
+		      DotDefinedDictionaries.Add dict
 		      
 		    elseif thisDict isa Dictionary then
 		      if allowInline = false and thisDict isa InlineDictionary then
 		        RaiseException "Cannot add to the inline table referenced by '" + key + "' on row " + RowNumber.ToString
+		      end if
+		      if SectionDefinedDictionaries.IndexOf( thisDict ) <> -1 then
+		        RaiseDuplicateKeyException key
 		      end if
 		      
 		      dict = thisDict
@@ -1417,7 +1417,7 @@ Private Class TOMLParser
 		  
 		  if thisByte = kByteSquareBracketOpen then
 		    byteIndex = byteIndex + 1
-		    MaybeRaiseUnexpectedEOLException p, lastByteIndex, byteIndex
+		    'MaybeRaiseUnexpectedEOLException p, lastByteIndex, byteIndex
 		    
 		    if p.Byte( byteIndex ) = kByteSquareBracketOpen then // Array header
 		      isArrayHeader = true
@@ -1430,13 +1430,16 @@ Private Class TOMLParser
 		      byteIndex = byteIndex + 1
 		      
 		    else // Dictionary header
+		      MaybeRaiseUnexpectedEOLException p, lastByteIndex, byteIndex
 		      isDictionaryHeader = true
 		      
 		      keys = ParseKeys( p, lastByteIndex, byteIndex )
-		      var sectionKey as string = String.FromArray( keys, "." )
 		    end if
 		    
-		    MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteSquareBracketClose
+		    if p.Byte( byteIndex ) <> kByteSquareBracketClose then
+		      RaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteSquareBracketClose
+		    end if
+		    
 		    byteIndex = byteIndex + 1
 		    MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
 		    
@@ -1459,6 +1462,8 @@ Private Class TOMLParser
 		      lastKey = keys.Pop
 		    end if
 		    
+		    var keyValue as variant
+		    
 		    for i as integer = 0 to keys.LastIndex
 		      var key as string = keys( i )
 		      
@@ -1466,18 +1471,19 @@ Private Class TOMLParser
 		      if not CurrentDictionary.HasKey( key ) then
 		        keyDict = ParseJSON( "{}" )
 		        CurrentDictionary.Value( key ) = keyDict
+		        keyValue = keyDict
 		        
 		      else
-		        var value as variant = CurrentDictionary.Value( key )
-		        if value.IsArray and value.ArrayElementType = Variant.TypeObject and IsDictionaryArray( value ) then
-		          var arr() as variant = value
+		        keyValue = CurrentDictionary.Value( key )
+		        if keyValue.IsArray and keyValue.ArrayElementType = Variant.TypeObject and IsDictionaryArray( keyValue ) then
+		          var arr() as variant = keyValue
 		          keyDict = arr( arr.LastIndex )
 		          
-		        elseif value isa M_TOML.InlineDictionary then
+		        elseif keyValue isa M_TOML.InlineDictionary then
 		          RaiseDuplicateKeyException key
 		          
-		        elseif value isa Dictionary then
-		          keyDict = value
+		        elseif keyValue isa Dictionary then
+		          keyDict = keyValue
 		          
 		        else
 		          RaiseDuplicateKeyException key
@@ -1504,6 +1510,16 @@ Private Class TOMLParser
 		      var newDict as Dictionary = ParseJSON( "{}" )
 		      arr.Add newDict
 		      CurrentDictionary = newDict
+		      
+		    else // Dictionary header
+		      if not ( keyValue isa Dictionary ) or _
+		        SectionDefinedDictionaries.IndexOf( CurrentDictionary ) <> -1 or _
+		        DotDefinedDictionaries.IndexOf( CurrentDictionary ) <> -1 _
+		        then
+		        RaiseDuplicateKeyException keys( keys.LastIndex )
+		      end if
+		      SectionDefinedDictionaries.Add CurrentDictionary
+		      
 		    end if
 		    
 		  else
@@ -1527,7 +1543,7 @@ Private Class TOMLParser
 		    #pragma StackOverflowChecking false
 		  #endif
 		  
-		  MaybeRaiseInvalidUnderscoreException p, byteIndex, lastByteIndex
+		  MaybeRaiseInvalidUnderscoreException p, lastByteIndex, byteIndex
 		  
 		  var value as integer
 		  
@@ -1537,7 +1553,7 @@ Private Class TOMLParser
 		    case kByteZero to kByteSeven
 		      value = ( value * 8 ) + ( thisByte - kByteZero )
 		    case kByteUnderscore
-		      MaybeRaiseInvalidUnderscoreException p, byteIndex + 1, lastByteIndex
+		      MaybeRaiseInvalidUnderscoreException p, lastByteIndex, byteIndex + 1
 		    case else
 		      exit while
 		    end select
@@ -1612,6 +1628,24 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Sub RaiseUnexpectedCharException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, expectedByte As Integer)
+		  #if not DebugBuild then
+		    #pragma BackgroundTasks false
+		    #pragma BoundsChecking false
+		    #pragma NilObjectChecking false
+		    #pragma StackOverflowChecking false
+		  #endif
+		  
+		  var col as integer = byteIndex - RowStartByteIndex + 1
+		  var msg as string = "Error on row " + RowNumber.ToString + ", column " + col.ToString + _
+		  ": Expected '" + Encodings.UTF8.Chr( expectedByte ) + _
+		  "' but found '" + Encodings.UTF8.Chr( p.Byte( byteIndex ) ) +"'"
+		  RaiseException msg
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Sub RaiseUnexpectedEndOfDataException()
 		  var msg as string = "Data has ended unexpectedly on row " + RowNumber.ToString
 		  RaiseException msg
@@ -1673,6 +1707,10 @@ Private Class TOMLParser
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
+		Private DotDefinedDictionaries() As Dictionary
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
 		Private InlineArrays() As Variant
 	#tag EndProperty
 
@@ -1682,6 +1720,10 @@ Private Class TOMLParser
 
 	#tag Property, Flags = &h21
 		Private RowStartByteIndex As Integer
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private SectionDefinedDictionaries() As Dictionary
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

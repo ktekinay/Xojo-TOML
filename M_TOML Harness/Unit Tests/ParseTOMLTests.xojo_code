@@ -2,26 +2,6 @@
 Protected Class ParseTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
-		Sub AddToExistingTableTest()
-		  var toml as string
-		  var d as Dictionary
-		  
-		  toml = JoinString( "[a.b]", "c=2", "[a]", "b.d=3", "c=5" )
-		  d = ParseTOML_MTC( toml )
-		  
-		  Assert.AreEqual 1, d.KeyCount
-		  var d1 as Dictionary = d.Value( "a" )
-		  Assert.AreEqual 2, d1.KeyCount
-		  Assert.AreEqual 5, d1.Value( "c" ).IntegerValue
-		  
-		  d1 = d1.Value( "b" )
-		  Assert.AreEqual 2, d1.KeyCount
-		  Assert.AreEqual 2, d1.Value( "c" ).IntegerValue
-		  
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
 		Sub ArrayHeaderTest()
 		  var toml as string
 		  var d as Dictionary

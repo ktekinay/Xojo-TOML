@@ -191,7 +191,39 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Sub BurntSushValidUnitTestsTest()
+		Sub BurntSushValidGenerateTest()
+		  //
+		  // Processes files from https://github.com/BurntSushi/toml-test
+		  //
+		  
+		  var validTests() as BurntSushiTest = GetBurntSushiTests( "valid" )
+		  
+		  for each test as BurntSushiTest in validTests
+		    var name as string = test.Name
+		    var path as string = test.TOMLFolderItem.NativePath
+		    path = path.Replace( BurntSushiFolder.NativePath, "" )
+		    
+		    try
+		      var expected as Dictionary = test.ExpectedDictionary
+		      var generated as string = GenerateTOML_MTC( expected )
+		      var parsed as Dictionary = ParseTOML_MTC( generated )
+		      var areSame as boolean = AreSameDictionaries( parsed, expected )
+		      Assert.IsTrue areSame, name + " in " + path + " (generate)"
+		      if not areSame then
+		        System.DebugLog "... (generated) " + path
+		        call GenerateTOML_MTC( parsed )
+		      end if
+		      
+		    catch err as M_TOML.TOMLException
+		      Assert.Fail name + " in " + path, err.Message
+		      
+		    end try
+		  next
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub BurntSushValidParseTest()
 		  //
 		  // Processes files from https://github.com/BurntSushi/toml-test
 		  //
@@ -209,15 +241,6 @@ Inherits TOMLTestGroupBase
 		      Assert.IsTrue areSame, name + " in " + path
 		      if not areSame then
 		        System.DebugLog "... " + path
-		      else
-		        var generated as string = GenerateTOML_MTC( actual )
-		        actual = ParseTOML_MTC( generated )
-		        areSame = AreSameDictionaries( actual, test.ExpectedDictionary )
-		        Assert.IsTrue areSame, name + " in " + path + " (generate)"
-		        if not areSame then
-		          System.DebugLog "... (generated) " + path
-		          call GenerateTOML_MTC( actual )
-		        end if
 		      end if
 		      
 		    catch err as M_TOML.TOMLException

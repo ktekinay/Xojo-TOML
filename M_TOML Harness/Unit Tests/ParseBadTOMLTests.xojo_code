@@ -2,6 +2,42 @@
 Protected Class ParseBadTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
+		Sub AddToExistingTableTest()
+		  var toml as string
+		  
+		  toml = JoinString( "[a.b]", "c=2", "[a]", "b.d=3", "c=5" )
+		  
+		  #pragma BreakOnExceptions false
+		  try
+		    call ParseTOML_MTC( toml )
+		    Assert.Fail "Added to existing table"
+		  catch err as M_TOML.TOMLException
+		    Assert.Pass
+		  end try
+		  #pragma BreakOnExceptions default
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub DuplicateTableArrayTest()
+		  var toml as string
+		  
+		  toml = JoinString( "[[a]]", "[a]" )
+		  
+		  #pragma BreakOnExceptions false
+		  try
+		    call ParseTOML_MTC( toml )
+		    Assert.Fail "Duplicate table array"
+		  catch err as M_TOML.TOMLException
+		    Assert.Pass
+		  end try
+		  #pragma BreakOnExceptions default
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub ExtendInlineArrayTest()
 		  var toml as string
 		  
@@ -100,6 +136,34 @@ Inherits TOMLTestGroupBase
 		    Assert.Pass
 		  end try
 		  #pragma BreakOnExceptions default
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SpaceInArrayHeaderTest()
+		  var toml as string
+		  
+		  toml = "[ [header]]"
+		  #pragma BreakOnExceptions false
+		  try
+		    call ParseTOML_MTC( toml )
+		    Assert.Fail "Space between left brackets"
+		  catch err as M_TOML.TOMLException
+		    Assert.Pass
+		  end try
+		  #pragma BreakOnExceptions default
+		  
+		  toml = "[[header] ]"
+		  #pragma BreakOnExceptions false
+		  try
+		    call ParseTOML_MTC( toml )
+		    Assert.Fail "Space between right brackets"
+		  catch err as M_TOML.TOMLException
+		    Assert.Pass
+		  end try
+		  #pragma BreakOnExceptions default
+		  
 		  
 		End Sub
 	#tag EndMethod
