@@ -2,6 +2,24 @@
 Protected Class ParseBadTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
+		Sub ExtendInlineArrayTest()
+		  var toml as string
+		  
+		  toml = JoinString( "a=[{}]", "[[a]]", "b=1" )
+		  
+		  #pragma BreakOnExceptions false
+		  try
+		    call ParseTOML_MTC( toml )
+		    Assert.Fail "Extended inline array"
+		  catch err as M_TOML.TOMLException
+		    Assert.Pass
+		  end try
+		  #pragma BreakOnExceptions default
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub ExtendInlineTableTest()
 		  var toml as string
 		  

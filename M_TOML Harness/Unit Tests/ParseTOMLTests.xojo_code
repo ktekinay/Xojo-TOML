@@ -230,13 +230,28 @@ Inherits TOMLTestGroupBase
 		  "-0.45E-9", _
 		  "3_141.5927", _
 		  "3141.592_7", _
-		  "3e1_4" _
+		  "3e1_4", _
+		  "1e0", _
+		  "1E+0", _
+		  "0.0", _
+		  "+0.0", _
+		  "-0.0", _
+		  "0e0", _
+		  "+0e0", _
+		  "-0e0", _
+		  "+0e-0", _
+		  "+0e+0", _
+		  "-0e-0" _
 		  )
 		  
 		  for each item as string in actual
 		    toml = "key1 = " + item
 		    d = ParseTOML_MTC( toml )
-		    var areEqual as boolean = item.ReplaceAll( "_", "" ).ToDouble.Equals( d.Value( "key1" ).DoubleValue, 1 )
+		    var expected as double = item.ReplaceAll( "_", "" ).ToDouble
+		    if abs( expected ) = 0.0 then
+		      expected = expected
+		    end if
+		    var areEqual as boolean = expected.Equals( d.Value( "key1" ).DoubleValue, 1 )
 		    Assert.IsTrue areEqual, item
 		    if not areEqual then
 		      call ParseTOML_MTC( toml ) // A place to break
@@ -346,6 +361,35 @@ Inherits TOMLTestGroupBase
 		  Assert.AreEqual 4, d.Value( "c" ).IntegerValue
 		  d1 = d.Value( "b" )
 		  Assert.AreEqual 2, d1.KeyCount
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub IntegerTest()
+		  var toml as string
+		  var d as Dictionary
+		  
+		  var actual() as string = array( _
+		  "0", _
+		  "+0", _
+		  "-0" _
+		  )
+		  
+		  for each item as string in actual
+		    toml = "key1 = " + item
+		    d = ParseTOML_MTC( toml )
+		    var expected as double = item.ReplaceAll( "_", "" ).ToDouble
+		    if abs( expected ) = 0.0 then
+		      expected = expected
+		    end if
+		    var areEqual as boolean = expected.Equals( d.Value( "key1" ).DoubleValue, 1 )
+		    Assert.IsTrue areEqual, item
+		    if not areEqual then
+		      call ParseTOML_MTC( toml ) // A place to break
+		    end if
+		  next
+		  
+		  
 		End Sub
 	#tag EndMethod
 

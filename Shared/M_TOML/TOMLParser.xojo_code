@@ -226,6 +226,7 @@ Private Class TOMLParser
 		      byteIndex = byteIndex + 1
 		      SkipWhitespace p, lastByteIndex, byteIndex
 		      value = arr
+		      InlineArrays.Add arr
 		      return true
 		      
 		    case else
@@ -497,6 +498,7 @@ Private Class TOMLParser
 		    case else //  Just a zero
 		      value = 0
 		      byteIndex = byteIndex + 1
+		      return true
 		      
 		    end select
 		    
@@ -548,11 +550,18 @@ Private Class TOMLParser
 		      //
 		      // That's fine
 		      //
-		    case else
+		    case kByteZero to kByteNine
 		      //
 		      // That's a no-no
 		      //
 		      return false
+		    case else
+		      //
+		      // Just a zero
+		      //
+		      value = 0
+		      byteIndex = testIndex + 1
+		      return true
 		    end select
 		    
 		  elseif p.Byte( testIndex ) < kByteOne or p.Byte( testIndex ) > kByteNine then
@@ -633,8 +642,15 @@ Private Class TOMLParser
 		      thisByte = p.Byte( testIndex )
 		    end if
 		    
-		    if thisByte < kByteOne or thisByte > kByteNine then
+		    if thisByte = kByteZero then
+		      var nextByte as integer = p.Byte( testIndex + 1 )
+		      if nextByte >= kByteZero and nextByte <= kByteNine then
+		        RaiseIllegalCharacterException testIndex
+		      end if
+		      
+		    elseif thisByte < kByteZero or thisByte > kByteNine then
 		      RaiseIllegalCharacterException testIndex
+		      
 		    end if
 		    
 		    while byteIndex <= lastByteIndex
@@ -847,7 +863,6 @@ Private Class TOMLParser
 		  var dict as Dictionary = ParseJSON( "{}" )
 		  BaseDictionary = dict
 		  CurrentDictionary = dict
-		  DefinedTables = ParseJSON( "{}" )
 		  
 		  if toml.Encoding is nil then
 		    toml = toml.DefineEncoding( Encodings.UTF8 )
@@ -1419,10 +1434,6 @@ Private Class TOMLParser
 		      
 		      keys = ParseKeys( p, lastByteIndex, byteIndex )
 		      var sectionKey as string = String.FromArray( keys, "." )
-		      if DefinedTables.HasKey( sectionKey ) then
-		        RaiseException "Redefining a table on row " + RowNumber.ToString
-		      end if
-		      DefinedTables.Value( sectionKey ) = nil
 		    end if
 		    
 		    MaybeRaiseUnexpectedCharException p, lastByteIndex, byteIndex, kByteSquareBracketClose
@@ -1481,6 +1492,8 @@ Private Class TOMLParser
 		      if CurrentDictionary.HasKey( lastKey ) then
 		        var value as variant = CurrentDictionary.Value( lastKey )
 		        if not value.IsArray then
+		          RaiseDuplicateKeyException lastKey
+		        elseif InlineArrays.IndexOf( value ) <> -1 then
 		          RaiseDuplicateKeyException lastKey
 		        end if
 		        arr = value
@@ -1660,7 +1673,7 @@ Private Class TOMLParser
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
-		Private DefinedTables As Dictionary
+		Private InlineArrays() As Variant
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

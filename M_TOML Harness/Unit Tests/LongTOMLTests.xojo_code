@@ -200,20 +200,20 @@ Inherits TOMLTestGroupBase
 		  
 		  for each test as BurntSushiTest in validTests
 		    var name as string = test.Name
-		    #pragma unused name
 		    var path as string = test.TOMLFolderItem.NativePath
+		    path = path.Replace( BurntSushiFolder.NativePath, "" )
 		    
 		    try
 		      var actual as Dictionary = ParseTOML_MTC( test.TOML )
 		      var areSame as boolean = AreSameDictionaries( actual, test.ExpectedDictionary )
-		      Assert.IsTrue areSame, test.Name
+		      Assert.IsTrue areSame, name + " in " + path
 		      if not areSame then
 		        System.DebugLog "... " + path
 		      else
 		        var generated as string = GenerateTOML_MTC( actual )
 		        actual = ParseTOML_MTC( generated )
 		        areSame = AreSameDictionaries( actual, test.ExpectedDictionary )
-		        Assert.IsTrue areSame, test.Name + " (generate)"
+		        Assert.IsTrue areSame, name + " in " + path + " (generate)"
 		        if not areSame then
 		          System.DebugLog "... (generated) " + path
 		          call GenerateTOML_MTC( actual )
@@ -221,7 +221,7 @@ Inherits TOMLTestGroupBase
 		      end if
 		      
 		    catch err as M_TOML.TOMLException
-		      Assert.Fail test.Name, err.Message
+		      Assert.Fail name + " in " + path, err.Message
 		      
 		    end try
 		  next
