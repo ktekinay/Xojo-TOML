@@ -2,24 +2,6 @@
 Protected Class ParseBadTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
-		Sub BadMultilineStringTest()
-		  var toml as string
-		  
-		  toml = JoinString( "a =""hi", "ho""" )
-		  
-		  #pragma BreakOnExceptions false
-		  try
-		    call ParseTOML_MTC( toml )
-		    Assert.Fail "Bad multiline"
-		  catch err as M_TOML.TOMLException
-		    Assert.Pass
-		  end try
-		  #pragma BreakOnExceptions default
-		  
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
 		Sub ExtendInlineTableTest()
 		  var toml as string
 		  
@@ -69,6 +51,24 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Sub MultilineStringTest()
+		  var toml as string
+		  
+		  toml = JoinString( "a =""hi", "ho""" )
+		  
+		  #pragma BreakOnExceptions false
+		  try
+		    call ParseTOML_MTC( toml )
+		    Assert.Fail "Bad multiline"
+		  catch err as M_TOML.TOMLException
+		    Assert.Pass
+		  end try
+		  #pragma BreakOnExceptions default
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub RedefineTableTest()
 		  var toml as string
 		  
@@ -82,6 +82,59 @@ Inherits TOMLTestGroupBase
 		    Assert.Pass
 		  end try
 		  #pragma BreakOnExceptions default
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub UnderscoreTest()
+		  var numbers() as string = array( _
+		  "-.12345", _
+		  "1__2", _
+		  "1._1", _
+		  "01", _
+		  "_1", _
+		  "_01", _
+		  "1_", _
+		  "-_1", _
+		  "+_1", _
+		  "1.", _
+		  "1.1_", _
+		  "1e", _
+		  "1_e1", _
+		  "1e_1", _
+		  "1.1_e1",_
+		  "1.1e+_1", _
+		  "1.1e-_1", _
+		  "1.1e1_", _
+		  "0x_1", _
+		  "0x1_", _
+		  "0x1__1", _
+		  "0x1G", _
+		  "0b_1", _
+		  "0b1_", _
+		  "0b1__1", _
+		  "0b2", _
+		  "0o_1", _
+		  "0o1_", _
+		  "0o1__1", _
+		  "0o9", _
+		  "0x", _
+		  "0o", _
+		  "0b" _
+		  )
+		  
+		  for each num as string in numbers
+		    var toml as string = "a=" + num
+		    #pragma BreakOnExceptions false
+		    try
+		      call ParseTOML_MTC( toml )
+		      Assert.Fail num
+		    catch err as M_TOML.TOMLException
+		      Assert.Pass
+		    end try
+		    #pragma BreakOnExceptions default
+		  next
 		  
 		End Sub
 	#tag EndMethod

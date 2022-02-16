@@ -433,6 +433,12 @@ Inherits TOMLTestGroupBase
 		  toml = JoinString( "key1 = """"""", "The quick", "brown fox""""""" )
 		  d = ParseTOML_MTC( toml )
 		  Assert.AreEqual "The quick" + EndOfLine + "brown fox", d.Value( "key1" ).StringValue
+		  
+		  var expected as string = """""a"""""
+		  toml = "key1 = """"""" + expected + """"""""
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual expected, d.Value( "key1" ).StringValue
+		  
 		End Sub
 	#tag EndMethod
 
@@ -444,6 +450,12 @@ Inherits TOMLTestGroupBase
 		  toml = JoinString( "key1 = '''", "The quick '' \", "brown fox'''" )
 		  d = ParseTOML_MTC( toml )
 		  Assert.AreEqual "The quick '' \" + EndOfLine + "brown fox", d.Value( "key1" ).StringValue
+		  
+		  var expected as string = "''a''"
+		  toml = "key1 = '''" + expected + "'''"
+		  d = ParseTOML_MTC( toml )
+		  Assert.AreEqual expected, d.Value( "key1" ).StringValue
+		  
 		End Sub
 	#tag EndMethod
 

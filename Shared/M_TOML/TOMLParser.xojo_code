@@ -148,7 +148,7 @@ Private Class TOMLParser
 		  next
 		  
 		  var ucode as UInt64 = code
-		  if uCode >= &hFFFFFFFE then
+		  if uCode >= &h10FFFF or ( uCode >= &hD800 and uCode <= &hDFFF ) then
 		    RaiseException "Invalid Unicode sequence on row " + RowNumber.ToString
 		  end if
 		  
@@ -460,7 +460,11 @@ Private Class TOMLParser
 		  var thisByte as integer = p.Byte( byteIndex )
 		  
 		  if thisByte = kByteZero then
+		    var valueStartIndex as integer = byteIndex + 2
+		    var keepGoing as boolean
+		    
 		    var nextByte as integer = p.Byte( byteIndex + 1 )
+		    
 		    select case nextByte
 		    case kByteLowB
 		      //
@@ -468,7 +472,6 @@ Private Class TOMLParser
 		      //
 		      byteIndex = byteIndex + 2
 		      value = ParseBinary( p, lastByteIndex, byteIndex )
-		      return true
 		      
 		    case kByteLowO
 		      //
@@ -476,7 +479,6 @@ Private Class TOMLParser
 		      //
 		      byteIndex = byteIndex + 2
 		      value = ParseOctal( p, lastByteIndex, byteIndex )
-		      return true
 		      
 		    case kByteLowX
 		      //
@@ -484,20 +486,29 @@ Private Class TOMLParser
 		      //
 		      byteIndex = byteIndex + 2
 		      value = ParseHex( p, lastByteIndex, byteIndex )
-		      return true
 		      
 		    case kByteDot, kByteLowE, kByteCapE
 		      //
 		      // It's a float or scientific notation
 		      // let it get processed
 		      //
+		      keepGoing = true
 		      
 		    case else //  Just a zero
 		      value = 0
 		      byteIndex = byteIndex + 1
-		      return true
 		      
 		    end select
+		    
+		    if not keepGoing then
+		      MaybeRaiseInvalidUnderscoreException p, byteIndex - 1, lastByteIndex
+		      
+		      if byteIndex = valueStartIndex then
+		        RaiseIllegalCharacterException byteIndex
+		      end if
+		      
+		      return true
+		    end if
 		  end if
 		  
 		  var testIndex as integer = byteIndex
@@ -530,6 +541,25 @@ Private Class TOMLParser
 		    
 		  end if
 		  
+		  if p.Byte( testIndex ) = kByteZero then
+		    var nextByte as integer = p.Byte( testIndex + 1 )
+		    select case nextByte
+		    case kByteDot, kByteLowE, kByteCapE
+		      //
+		      // That's fine
+		      //
+		    case else
+		      //
+		      // That's a no-no
+		      //
+		      return false
+		    end select
+		    
+		  elseif p.Byte( testIndex ) < kByteOne or p.Byte( testIndex ) > kByteNine then
+		    return false
+		    
+		  end if
+		  
 		  //
 		  // Look for integer
 		  //
@@ -537,12 +567,14 @@ Private Class TOMLParser
 		    select case p.Byte( testIndex )
 		    case kByteUnderscore
 		      testIndex = testIndex + 1
+		      MaybeRaiseInvalidUnderscoreException p, testIndex, lastByteIndex
 		    case kByteZero to kByteNine
 		      testIndex = testIndex + 1
 		    case kByteDot, kByteLowE, kByteCapE
 		      //
 		      // Onto the next part
 		      //
+		      MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
 		      exit do
 		      
 		    case else
@@ -550,6 +582,8 @@ Private Class TOMLParser
 		      if stringLen = 0 then
 		        return false
 		      end if
+		      
+		      MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
 		      
 		      var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen )
 		      value = stringValue.ReplaceAll( "_", "" ).ToInteger
@@ -564,24 +598,28 @@ Private Class TOMLParser
 		  // A dot?
 		  //
 		  if p.Byte( testIndex ) = kByteDot then
-		    var nextByte as integer = p.Byte( testIndex + 1 )
+		    testIndex = testIndex + 1
+		    var nextByte as integer = p.Byte( testIndex )
 		    
-		    if nextByte < kByteZero or thisByte > kByteNine then
+		    if nextByte < kByteZero or nextByte > kByteNine then
 		      RaiseIllegalCharacterException testIndex
 		    end if
-		    
-		    testIndex = testIndex + 1
 		    
 		    while byteIndex <= lastByteIndex
 		      var testByte as integer = p.Byte( testIndex )
 		      select case testByte
-		      case kByteZero to kByteNine, kByteUnderscore
+		      case kByteZero to kByteNine
 		        testIndex = testIndex + 1
+		      case kByteUnderscore
+		        testIndex = testIndex + 1
+		        MaybeRaiseInvalidUnderscoreException p, testIndex, lastByteIndex
 		      case else
 		        exit while
 		      end select
 		    wend
 		  end if
+		  
+		  MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
 		  
 		  //
 		  // E?
@@ -595,15 +633,18 @@ Private Class TOMLParser
 		      thisByte = p.Byte( testIndex )
 		    end if
 		    
-		    if thisByte < kByteZero or thisByte > kByteNine then
+		    if thisByte < kByteOne or thisByte > kByteNine then
 		      RaiseIllegalCharacterException testIndex
 		    end if
 		    
 		    while byteIndex <= lastByteIndex
 		      thisByte = p.Byte( testIndex )
 		      select case thisByte
-		      case kByteZero to kByteNine, kByteUnderscore
+		      case kByteZero to kByteNine
 		        testIndex = testIndex + 1
+		      case kByteUnderscore
+		        testIndex = testIndex + 1
+		        MaybeRaiseInvalidUnderscoreException p, testIndex, lastByteIndex
 		      case else
 		        exit while
 		      end select
@@ -613,6 +654,8 @@ Private Class TOMLParser
 		  //
 		  // Let's send it back
 		  //
+		  MaybeRaiseInvalidUnderscoreException p, testIndex - 1, lastByteIndex
+		  
 		  var stringLen as integer = testIndex - byteIndex
 		  var stringValue as string = TOMLMemoryBlock.StringValue( byteIndex, stringLen, Encodings.UTF8 )
 		  stringValue = stringValue.ReplaceAllBytes( "_", "" )
@@ -745,6 +788,15 @@ Private Class TOMLParser
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
+		Private Sub MaybeRaiseInvalidUnderscoreException(p As Ptr, byteIndex As Integer, lastByteIndex As Integer)
+		  if byteIndex >= 0 and byteIndex <= lastByteIndex and p.Byte( byteIndex ) = kByteUnderscore then
+		    RaiseException "An underscore cannot be the first or last number character in row " + RowNumber.ToString
+		  end if
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
 		Private Sub MaybeRaiseUnexpectedCharException(p As Ptr, lastByteIndex As Integer, ByRef byteIndex As Integer, expectedByte As Integer)
 		  #if not DebugBuild then
 		    #pragma BackgroundTasks false
@@ -861,21 +913,25 @@ Private Class TOMLParser
 		  
 		  var chunks() as string
 		  var chunkStartIndex as integer = byteIndex
+		  var quoteCount as integer
 		  
 		  while byteIndex <= lastByteIndex
 		    var thisByte as integer = p.Byte( byteIndex )
 		    select case thisByte
 		    case kByteQuoteDouble
-		      var chunkEndIndex as integer = byteIndex - 1
+		      quoteCount = quoteCount + 1
+		      
+		      var chunkEndIndex as integer
 		      var isDone as boolean
 		      
 		      if not isMultiline then
+		        chunkEndIndex = byteIndex - 1
 		        isDone = true
 		        byteIndex = byteIndex + 1
-		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteDouble and p.Byte( byteIndex + 2 ) = kByteQuoteDouble and _
-		        p.Byte( byteIndex + 3 ) <> kByteQuoteDouble then // If the next char is also a quote, keep going
+		      elseif quoteCount = 5 or ( quoteCount >= 3 and p.Byte( byteIndex + 1 ) <> kByteQuoteDouble ) then
+		        chunkEndIndex = byteIndex - 3
 		        isDone =  true
-		        byteIndex = byteIndex + 3
+		        byteIndex = byteIndex + 1
 		      end if
 		      
 		      if isDone then
@@ -891,9 +947,11 @@ Private Class TOMLParser
 		        RaiseUnexpectedEndOfDataException
 		      end if
 		      
-		      byteIndex = byteIndex + 1
+		      quoteCount = 0
+		      SkipToNextRow p, lastByteIndex, byteIndex
 		      
 		    case kByteBackslash
+		      quoteCount = 0
 		      chunks.Add GetChunk( chunkStartIndex, byteIndex - 1 )
 		      byteIndex = byteIndex + 1
 		      
@@ -950,13 +1008,11 @@ Private Class TOMLParser
 		        end select
 		      loop
 		      
-		    case kByteEOL
-		      SkipToNextRow p, lastByteIndex, byteIndex
-		      
 		    case 0 to 8, 11 to 12, 14 to 31, 127
 		      RaiseIllegalCharacterException byteIndex
 		      
 		    case else
+		      quoteCount = 0
 		      byteIndex = byteIndex + 1
 		      
 		    end select
@@ -979,6 +1035,8 @@ Private Class TOMLParser
 		    #pragma StackOverflowChecking false
 		  #endif
 		  
+		  MaybeRaiseInvalidUnderscoreException p, byteIndex, lastByteIndex
+		  
 		  var value as integer
 		  
 		  while byteIndex <= lastByteIndex
@@ -988,6 +1046,7 @@ Private Class TOMLParser
 		    case kByteZero
 		      value = value * 2
 		    case kByteUnderscore
+		      MaybeRaiseInvalidUnderscoreException p, byteIndex + 1, lastByteIndex
 		    case else
 		      exit while
 		    end select
@@ -1008,6 +1067,8 @@ Private Class TOMLParser
 		    #pragma StackOverflowChecking false
 		  #endif
 		  
+		  MaybeRaiseInvalidUnderscoreException p, byteIndex, lastByteIndex
+		  
 		  var value as integer
 		  
 		  while byteIndex <= lastByteIndex
@@ -1021,6 +1082,7 @@ Private Class TOMLParser
 		    case kByteCapA to kByteCapF
 		      value = ( value * 16 ) + 10 + ( thisByte - kByteCapA )
 		    case kByteUnderscore
+		      MaybeRaiseInvalidUnderscoreException p, byteIndex + 1, lastByteIndex
 		    case else
 		      exit while
 		    end select
@@ -1234,24 +1296,33 @@ Private Class TOMLParser
 		  end if
 		  
 		  var stringStartIndex as integer = byteIndex
+		  var quoteCount as integer
 		  
 		  while byteIndex <= lastByteIndex
 		    var thisByte as integer = p.Byte( byteIndex )
 		    select case thisByte
 		    case kByteEOL
+		      if not isMultiline then
+		        RaiseUnexpectedEndOfDataException
+		      end if
+		      
+		      quoteCount = 0
 		      SkipToNextRow p, lastByteIndex, byteIndex
 		      
 		    case kByteQuoteSingle
+		      quoteCount = quoteCount + 1
+		      
 		      var isDone as boolean
-		      var stringEndIndex as integer = byteIndex - 1
+		      var stringEndIndex as integer
 		      
 		      if not isMultiline then
+		        stringEndIndex = byteIndex - 1
 		        isDone = true
 		        byteIndex = byteIndex + 1
-		      elseif p.Byte( byteIndex + 1 ) = kByteQuoteSingle and p.Byte( byteIndex + 2 ) = kByteQuoteSingle and _
-		        p.Byte( byteIndex + 3 ) <> kByteQuoteSingle then // If the next char is also a quote, keep going
+		      elseif quoteCount = 5 or ( quoteCount >= 3 and p.Byte( byteIndex + 1 ) <> kByteQuoteSingle ) then
+		        stringEndIndex = byteIndex - 3
 		        isDone = true
-		        byteIndex = byteIndex + 3
+		        byteIndex = byteIndex + 1
 		      end if
 		      
 		      if isDone then
@@ -1265,7 +1336,10 @@ Private Class TOMLParser
 		      end if
 		      
 		    case 0 to 8, 11 to 12, 14 to 31, 127
-		      MaybeRaiseIllegalCharacterException p, lastByteIndex, byteIndex
+		      RaiseIllegalCharacterException byteIndex
+		      
+		    case else
+		      quoteCount = 0
 		      
 		    end select
 		    
@@ -1440,6 +1514,8 @@ Private Class TOMLParser
 		    #pragma StackOverflowChecking false
 		  #endif
 		  
+		  MaybeRaiseInvalidUnderscoreException p, byteIndex, lastByteIndex
+		  
 		  var value as integer
 		  
 		  while byteIndex <= lastByteIndex
@@ -1448,6 +1524,7 @@ Private Class TOMLParser
 		    case kByteZero to kByteSeven
 		      value = ( value * 8 ) + ( thisByte - kByteZero )
 		    case kByteUnderscore
+		      MaybeRaiseInvalidUnderscoreException p, byteIndex + 1, lastByteIndex
 		    case else
 		      exit while
 		    end select
