@@ -1644,6 +1644,8 @@ Private Class TOMLParser
 		    #pragma StackOverflowChecking false
 		  #endif
 		  
+		  #pragma unused lastByteIndex
+		  
 		  var col as integer = byteIndex - RowStartByteIndex + 1
 		  var msg as string = "Error on row " + RowNumber.ToString + ", column " + col.ToString + _
 		  ": Expected '" + Encodings.UTF8.Chr( expectedByte ) + _
