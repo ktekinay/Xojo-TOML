@@ -68,6 +68,12 @@ For this purpose, you can use the **`M_TOML.LocalTime`** class.
 
 **Note**: While similar to **`DateTime`**, the **`M_TOML.LocalTime`** class is not a subclass of an existing Xojo class.
 
+## Unit Tests
+
+The project's unit tests includes files from the [Burnt Sushi TOML test project](https://github.com/BurntSushi/toml-test) on GitHub. See the project for details.
+
+Some of those tests were disabled because this parser is more tolerant than the spec when it comes to end-of-line characters. In practice, this should make no real-world difference.
+
 ## Comments and Contributions
 
 All contributions to this project will be gratefully considered. Fork this repo to your own, then submit your changes via a Pull Request.
