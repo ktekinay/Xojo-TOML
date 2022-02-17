@@ -1,6 +1,6 @@
 # Xojo-TOML
 
-A Xojo TOML conversion library
+A Xojo TOML library.
 
 ## Description
 
