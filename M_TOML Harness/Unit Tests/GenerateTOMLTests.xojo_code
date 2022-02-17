@@ -345,7 +345,7 @@ Inherits TOMLTestGroupBase
 	#tag Constant, Name = kExpectedArrayOfDictTOML, Type = String, Dynamic = False, Default = \"[[ a ]]\n  b \x3D 2\n  c \x3D 3\n\n[[ a ]]\n\n[[ a ]]\n  d \x3D true\n", Scope = Private
 	#tag EndConstant
 
-	#tag Constant, Name = kExpectedEmbeddedDictTOML, Type = String, Dynamic = False, Default = \"z \x3D true\n\n[ a ]\n  c \x3D 1\n  d \x3D 2\n\n  [ a.b ]\n    e \x3D false\n", Scope = Private
+	#tag Constant, Name = kExpectedEmbeddedDictTOML, Type = String, Dynamic = False, Default = \"z \x3D true\n\n[ a ]\n  b.e \x3D false\n  c \x3D 1\n  d \x3D 2\n", Scope = Private
 	#tag EndConstant
 
 
