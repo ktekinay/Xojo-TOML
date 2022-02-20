@@ -348,7 +348,8 @@ Private Class TOMLGenerator
 		  //
 		  // Consolidate and copy each value first
 		  //
-		  for i as integer = 0 to keys.LastIndex
+		  var keysLastIndex as integer = keys.LastIndex
+		  for i as integer = 0 to keysLastIndex
 		    var key as string = keys( i ).StringValue
 		    key = ToBasicString( key, true )
 		    keys( i ) = key
@@ -358,17 +359,27 @@ Private Class TOMLGenerator
 		    value = EncodeValue( value )
 		    
 		    if value isa Dictionary then
-		      var subdict as Dictionary = value
-		      if subdict.KeyCount = 0 then
+		      var subDict as Dictionary = value
+		      if subDict.KeyCount = 0 then
 		        value = new M_TOML.InlineDictionary
-		      elseif subdict.KeyCount = 1 then
+		      elseif subdict.KeyCount <= 2 and not ( subDict isa M_TOML.InlineDictionary ) then
 		        //
 		        // We can consolidate this
 		        //
-		        var subkey as string = subdict.Key( 0 )
-		        value = subdict.Value( subkey )
-		        key = key + kDot + subkey
-		        keys( i ) = key
+		        var subKeys() as variant = subdict.Keys
+		        var subValues() as variant = subdict.Values
+		        for subIndex as integer = 0 to subKeys.LastIndex
+		          var subKey as string = subKeys( subIndex )
+		          var subValue as variant = subValues( subIndex )
+		          
+		          if subIndex = 0 then
+		            keys( i ) = key + kDot + subKey
+		            value = subValue
+		          else
+		            keys.Add key + kDot + subKey
+		            values.Add subValue
+		          end if
+		        next
 		      end if
 		    end if
 		    
@@ -609,7 +620,7 @@ Private Class TOMLGenerator
 		    var key as string = keys( i )
 		    var value as variant = values( i )
 		    
-		    if value.IsArray and IsDictionaryArray( value ) then
+		    if not IsInArray and value.IsArray and IsDictionaryArray( value ) then
 		      arrayKeys.Add key
 		      arrayValues.Add value
 		    elseif value isa Dictionary and not ( value isa M_TOML.InlineDictionary ) then
@@ -669,6 +680,7 @@ Private Class TOMLGenerator
 		  //
 		  // Output arrays
 		  //
+		  IsInArray = true
 		  for i as integer = 0 to arrayKeys.LastIndex
 		    var key as string = arrayKeys( i )
 		    var arr() as variant = arrayValues( i )
@@ -692,6 +704,7 @@ Private Class TOMLGenerator
 		      CurrentLevel = CurrentLevel - 1
 		    next
 		  next
+		  IsInArray = false
 		End Sub
 	#tag EndMethod
 
@@ -871,8 +884,32 @@ Private Class TOMLGenerator
 		Private Shared Indents(0) As String
 	#tag EndProperty
 
+	#tag ComputedProperty, Flags = &h21
+		#tag Getter
+			Get
+			  return mIsInArrayCount > 0
+			  
+			End Get
+		#tag EndGetter
+		#tag Setter
+			Set
+			  if value then
+			    mIsInArrayCount = mIsInArrayCount + 1
+			  elseif mIsInArrayCount > 0 then
+			    mIsInArrayCount = mIsInArrayCount - 1
+			  end if
+			  
+			End Set
+		#tag EndSetter
+		Private IsInArray As Boolean
+	#tag EndComputedProperty
+
 	#tag Property, Flags = &h21
 		Private KeyStack() As String
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mIsInArrayCount As Integer
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

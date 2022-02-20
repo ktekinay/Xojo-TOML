@@ -2,6 +2,31 @@
 Protected Class GenerateTOMLTests
 Inherits TOMLTestGroupBase
 	#tag Method, Flags = &h0
+		Sub ArrayInArrayTest()
+		  var d as new Dictionary
+		  var arr() as variant
+		  
+		  for i as integer = 0 to 1
+		    var subd as new Dictionary
+		    subd.Value( "a" ) = 1
+		    subd.Value( "i" ) = i
+		    
+		    var subarr() as variant
+		    var subd2 as new Dictionary( "x" : 1, "y" : 2, "z" : 3 )
+		    subarr.Add subd2
+		    subd.Value( "subarr" ) = subarr
+		    arr.Add subd
+		  next
+		  
+		  d.Value( "arr" ) = arr
+		  
+		  var toml as string = GenerateTOML_MTC( d )
+		  Assert.AreSame kExpectedArrayInArrayTOML, toml
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub ArrayOfDictTest()
 		  var d as Dictionary
 		  var toml as string
@@ -24,7 +49,7 @@ Inherits TOMLTestGroupBase
 		  d.Value( "a" ) = arr
 		  
 		  toml = GenerateTOML_MTC( d )
-		  Assert.AreEqual kExpectedArrayOfDictTOML, toml
+		  Assert.AreSame kExpectedArrayOfDictTOML, toml
 		  
 		End Sub
 	#tag EndMethod
@@ -43,6 +68,21 @@ Inherits TOMLTestGroupBase
 		  d.Value( "a" ) = 2
 		  toml = GenerateTOML_MTC( d )
 		  Assert.AreSame "a = 2" + EndOfLine, toml
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ConsolidationTest()
+		  var d as new Dictionary
+		  var subd as new Dictionary
+		  d.Value( "sub" ) = subd
+		  
+		  subd.Value( "a" ) = 1
+		  subd.Value( "b" ) = 2
+		  
+		  var toml as string = GenerateTOML_MTC( d )
+		  Assert.AreSame kExpectedConsolidatedDictTOML, toml
+		  
 		End Sub
 	#tag EndMethod
 
@@ -342,7 +382,13 @@ Inherits TOMLTestGroupBase
 	#tag EndMethod
 
 
+	#tag Constant, Name = kExpectedArrayInArrayTOML, Type = String, Dynamic = False, Default = \"[[ arr ]]\n  a \x3D 1\n  i \x3D 0\n  subarr \x3D [ { x \x3D 1\x2C y \x3D 2\x2C z \x3D 3 }\x2C ]\n\n[[ arr ]]\n  a \x3D 1\n  i \x3D 1\n  subarr \x3D [ { x \x3D 1\x2C y \x3D 2\x2C z \x3D 3 }\x2C ]\n", Scope = Private
+	#tag EndConstant
+
 	#tag Constant, Name = kExpectedArrayOfDictTOML, Type = String, Dynamic = False, Default = \"[[ a ]]\n  b \x3D 2\n  c \x3D 3\n\n[[ a ]]\n\n[[ a ]]\n  d \x3D true\n", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kExpectedConsolidatedDictTOML, Type = String, Dynamic = False, Default = \"sub.a \x3D 1\nsub.b \x3D 2\n", Scope = Private
 	#tag EndConstant
 
 	#tag Constant, Name = kExpectedEmbeddedDictTOML, Type = String, Dynamic = False, Default = \"z \x3D true\n\n[ a ]\n  b.e \x3D false\n  c \x3D 1\n  d \x3D 2\n", Scope = Private
