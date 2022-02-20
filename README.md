@@ -46,6 +46,8 @@ toml = { a = 1, b = 2 }
 
 This only makes a difference visually, but if you want to force an inline **`Dictionary`** from `GenerateTOML_MTC`, use the **`M_TOML.InlineDictionary`** class.
 
+**Note**: Under certain circumstances, this software may choose to represent a **`Dictionary`** inline regardless.
+
 TOML allows encoding of a **`DateTime`** either with or without a time zone. Examples:
 
 ```
