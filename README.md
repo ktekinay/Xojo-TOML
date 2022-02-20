@@ -72,6 +72,24 @@ For this purpose, you can use the **`M_TOML.LocalTime`** class.
 
 The project's unit tests includes files from the [Burnt Sushi TOML test project](https://github.com/BurntSushi/toml-test) on GitHub. See the project for details.
 
+Their copyright notice:
+
+<blockquote>
+Copyright (c) 2018 TOML authors
+
+----------------------------
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+</blockquote>
+
 Some of those tests were disabled because this parser is more tolerant than the spec when it comes to end-of-line characters. In practice, this should make no real-world difference.
 
 ## Comments and Contributions
