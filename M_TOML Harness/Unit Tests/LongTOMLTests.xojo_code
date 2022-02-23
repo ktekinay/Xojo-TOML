@@ -242,6 +242,9 @@ Inherits TOMLTestGroupBase
 		      Assert.IsTrue areSame, name + " in " + path
 		      if not areSame then
 		        System.DebugLog "... " + path
+		        #if TargetWindows then
+		          Assert.Message "SOME TESTS FAIL BECAUSE OF EOL NORMALIZATION, and that's not an actual failure of the parser"
+		        #endif
 		      end if
 		      
 		    catch err as M_TOML.TOMLException

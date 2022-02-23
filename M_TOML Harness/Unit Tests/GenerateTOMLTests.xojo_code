@@ -21,7 +21,8 @@ Inherits TOMLTestGroupBase
 		  d.Value( "arr" ) = arr
 		  
 		  var toml as string = GenerateTOML_MTC( d )
-		  Assert.AreSame kExpectedArrayInArrayTOML, toml
+		  var expected as string = kExpectedArrayInArrayTOML.ReplaceLineEndings( EndOfLine )
+		  Assert.AreSame expected, toml
 		  
 		End Sub
 	#tag EndMethod
@@ -49,7 +50,8 @@ Inherits TOMLTestGroupBase
 		  d.Value( "a" ) = arr
 		  
 		  toml = GenerateTOML_MTC( d )
-		  Assert.AreSame kExpectedArrayOfDictTOML, toml
+		  var expected as string = kExpectedArrayOfDictTOML.ReplaceLineEndings( EndOfLine )
+		  Assert.AreSame expected, toml
 		  
 		End Sub
 	#tag EndMethod
@@ -81,7 +83,8 @@ Inherits TOMLTestGroupBase
 		  subd.Value( "b" ) = 2
 		  
 		  var toml as string = GenerateTOML_MTC( d )
-		  Assert.AreSame kExpectedConsolidatedDictTOML, toml
+		  var expected as string = kExpectedConsolidatedDictTOML.ReplaceLineEndings( EndOfLine )
+		  Assert.AreSame expected, toml
 		  
 		End Sub
 	#tag EndMethod
@@ -107,9 +110,9 @@ Inherits TOMLTestGroupBase
 		  var tz as new Timezone( -5.5 * 60.0 * 60.0 )
 		  
 		  d = new Dictionary
-		  d.Value( "a" ) = new DateTime( 2021, 4, 5, 1, 2, 3, 456000000, tz )
+		  d.Value( "a" ) = new DateTime( 2021, 4, 5, 1, 2, 3, 123000000, tz )
 		  toml = GenerateTOML_MTC( d )
-		  Assert.AreSame "a = 2021-04-05T01:02:03.456-05:30" + EndOfLine, toml
+		  Assert.AreSame "a = 2021-04-05T01:02:03.123-05:30" + EndOfLine, toml
 		  
 		End Sub
 	#tag EndMethod
@@ -197,7 +200,8 @@ Inherits TOMLTestGroupBase
 		  d.Value( "z" ) = true
 		  
 		  var toml as string = GenerateTOML_MTC( d )
-		  Assert.AreSame kExpectedEmbeddedDictTOML, toml
+		  var expected as string = kExpectedEmbeddedDictTOML.ReplaceLineEndings( EndOfLine )
+		  Assert.AreSame expected, toml
 		  
 		End Sub
 	#tag EndMethod

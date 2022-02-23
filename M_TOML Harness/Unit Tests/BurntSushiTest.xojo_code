@@ -49,6 +49,9 @@ Protected Class BurntSushiTest
 		      case "float"
 		        trueValue = value.ToDouble
 		      case "string"
+		        #if TargetWindows then
+		          value = value.ReplaceAll( EndOfLine.UNIX, EndOfLine.Windows )
+		        #endif
 		        trueValue = value
 		      case "datetime", "datetime-local"
 		        trueValue = ParseDateTime( value )
@@ -147,7 +150,8 @@ Protected Class BurntSushiTest
 		  var tis as TextInputStream = TextInputStream.Open( f )
 		  var result as string = tis.ReadAll( Encodings.UTF8 )
 		  tis.Close
-		  return result
+		  return result.ReplaceLineEndings( EndOfLine )
+		  
 		End Function
 	#tag EndMethod
 
@@ -212,6 +216,14 @@ Protected Class BurntSushiTest
 			Group="Position"
 			InitialValue="0"
 			Type="Integer"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="TOML"
+			Visible=false
+			Group="Behavior"
+			InitialValue=""
+			Type="String"
 			EditorType=""
 		#tag EndViewProperty
 	#tag EndViewBehavior

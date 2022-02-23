@@ -453,16 +453,16 @@ Inherits TOMLTestGroupBase
 		  
 		  toml = JoinString( "key1 = """"""", "The quick """" \", "brown fox""""""" )
 		  d = ParseTOML_MTC( toml )
-		  Assert.AreEqual "The quick """" brown fox", d.Value( "key1" ).StringValue
+		  Assert.AreSame "The quick """" brown fox", d.Value( "key1" ).StringValue, "Ignore EOL"
 		  
 		  toml = JoinString( "key1 = """"""", "The quick", "brown fox""""""" )
 		  d = ParseTOML_MTC( toml )
-		  Assert.AreEqual "The quick" + EndOfLine + "brown fox", d.Value( "key1" ).StringValue
+		  Assert.AreSame "The quick" + EndOfLine + "brown fox", d.Value( "key1" ).StringValue, "Include EOL"
 		  
 		  var expected as string = """""a"""""
 		  toml = "key1 = """"""" + expected + """"""""
 		  d = ParseTOML_MTC( toml )
-		  Assert.AreEqual expected, d.Value( "key1" ).StringValue
+		  Assert.AreSame expected, d.Value( "key1" ).StringValue
 		  
 		End Sub
 	#tag EndMethod

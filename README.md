@@ -94,6 +94,8 @@ all copies or substantial portions of the Software.
 
 Some of those tests were disabled because this parser is more tolerant than the spec when it comes to end-of-line characters. In practice, this should make no real-world difference.
 
+Similarly, some tests will fail on Windows because of end-of-line normalization, i.e., a "\n" was normalized into a CR+LF for testing purposes. This is not an actual failure.
+
 ## Comments and Contributions
 
 All contributions to this project will be gratefully considered. Fork this repo to your own, then submit your changes via a Pull Request.
