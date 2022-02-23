@@ -4,6 +4,9 @@ Inherits Application
 	#tag Event
 		Sub Open()
 		  StopProfiling
+		  
+		  App.AllowAutoQuit = true
+		  
 		End Sub
 	#tag EndEvent
 
