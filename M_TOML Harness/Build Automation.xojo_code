@@ -2,14 +2,7 @@
 			Begin BuildStepList Linux
 				Begin BuildProjectStep Build
 				End
-			End
-			Begin BuildStepList Mac OS X
-				Begin BuildProjectStep Build
-				End
-				Begin SignProjectStep Sign
-				  DeveloperID=
-				End
-				Begin CopyFilesBuildStep CopyBurntSushiTests
+				Begin CopyFilesBuildStep CopyBurntSushiTestsLinux
 					AppliesTo = 0
 					Architecture = 0
 					Target = 0
@@ -18,8 +11,31 @@
 					FolderItem = Li4vLi4vSW5jbHVkZSUyMFJlc291cmNlcy9CdXJudFN1c2hpVGVzdHMv
 				End
 			End
+			Begin BuildStepList Mac OS X
+				Begin BuildProjectStep Build
+				End
+				Begin CopyFilesBuildStep CopyBurntSushiTestsMac
+					AppliesTo = 0
+					Architecture = 0
+					Target = 0
+					Destination = 1
+					Subdirectory = 
+					FolderItem = Li4vLi4vSW5jbHVkZSUyMFJlc291cmNlcy9CdXJudFN1c2hpVGVzdHMv
+				End
+				Begin SignProjectStep Sign
+				  DeveloperID=
+				End
+			End
 			Begin BuildStepList Windows
 				Begin BuildProjectStep Build
+				End
+				Begin CopyFilesBuildStep CopyBurntSushiTestsWin
+					AppliesTo = 0
+					Architecture = 0
+					Target = 0
+					Destination = 1
+					Subdirectory = 
+					FolderItem = Li4vLi4vSW5jbHVkZSUyMFJlc291cmNlcy9CdXJudFN1c2hpVGVzdHMv
 				End
 			End
 #tag EndBuildAutomation
