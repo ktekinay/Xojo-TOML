@@ -967,6 +967,14 @@ Private Class TOMLParser
 		      end if
 		      
 		      quoteCount = 0
+		      #if TargetWindows then
+		        //
+		        // Need the CR
+		        //
+		        chunks.Add GetChunk( chunkStartIndex, byteIndex - 1 )
+		        chunkStartIndex = byteIndex
+		        chunks.Add &u0D
+		      #endif
 		      SkipToNextRow p, lastByteIndex, byteIndex
 		      
 		    case kByteBackslash
