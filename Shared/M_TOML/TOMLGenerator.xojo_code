@@ -291,12 +291,11 @@ Private Class TOMLGenerator
 		  var dateString as string = dt.SQLDateTime.Replace( kSpace, "T" )
 		  
 		  if dt.Nanosecond <> 0 then
-		    static loc as new Locale( "en-US" )
-		    
 		    var ns as integer = dt.Nanosecond
-		    var µs as integer = round( ( ns / 1000.0 ) + 0.5 )
-		    var dµs as double = µs / kMillion
-		    dateString = dateString + dµs.ToString( loc, ".0#####" )
+		    var dµs as double = ns / 1000.0
+		    var truncatedµs as integer = dµs
+		    dµs = truncatedµs / kMillion
+		    dateString = dateString + dµs.ToString( USLocale, ".0#####" )
 		  end if
 		  
 		  if not ( dt isa M_TOML.LocalDateTime ) then
