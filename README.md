@@ -4,7 +4,7 @@ A Xojo TOML library.
 
 ## Description
 
-This implements the `ParseTOML_MTC` and `GenerateTOML_MTC` functions that work with [TOML](https://toml.io) v.1.0.0 the way the native `ParseJSON` and `GenerateJSON` work with JSON.
+This implements `ParseTOML_MTC` and `GenerateTOML_MTC` functions that work with [TOML](https://toml.io) v.1.0.0 the way the native `ParseJSON` and `GenerateJSON` work with JSON.
 
 ## Installation
 
