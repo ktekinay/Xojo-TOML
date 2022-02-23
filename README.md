@@ -108,4 +108,6 @@ This project was created by and is maintained by Kem Tekinay (ktekinay@mactechno
 
 ## Release Notes
 
-- 1.0 ( ____  )
+**1.0** (Feb. 23, 2022)
+
+- Inital release.
